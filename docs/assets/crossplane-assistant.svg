@@ -1,0 +1,16 @@
+
+<svg width="84px" height="124px" viewBox="0 0 84 124" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <desc>Crossplane Assistant logo.</desc>
+    <defs></defs>
+    <g  stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path d="M32,93 L47,93 L47,116.5 C47,120.642136 43.6421356,124 39.5,124 L39.5,124 C35.3578644,124 32,120.642136 32,116.5 L32,93 Z" id="Rectangle-2" fill="#FDD179"></path>
+        <path d="M41,9 L41,9 C57.5685425,9 71,22.4314575 71,39 L71,88 C71,94.627417 65.627417,100 59,100 L24,100 C16.8202983,100 11,94.1797017 11,87 L11,39 C11,22.4314575 24.4314575,9 41,9 Z" id="Rectangle" fill="#B7CEF9"></path>
+        <rect id="Rectangle-4" fill="#000000" x="0" y="43" width="9" height="28" rx="4"></rect>
+        <rect id="Rectangle-4" fill="#000000" x="75" y="41" width="9" height="28" rx="4"></rect>
+        <rect id="Rectangle-3" fill="#000000" x="29" y="33" width="6" height="16" rx="3"></rect>
+        <rect id="Rectangle-3" fill="#000000" x="47" y="33" width="6" height="16" rx="3"></rect>
+        <path d="M41.5,75.3591096 C45.6421356,75.3591096 49,73.7921062 49,71.8591096 C49,69.926113 45.6421356,71.8591096 41.5,71.8591096 C37.3578644,71.8591096 34,69.926113 34,71.8591096 C34,73.7921062 37.3578644,75.3591096 41.5,75.3591096 Z" id="Oval" fill="#000000"></path>
+        <ellipse id="Oval-2" fill="#0A0A0A" cx="39.5" cy="92.5" rx="7.5" ry="5.5"></ellipse>
+        <path d="M42,93 C47.8902195,93 53.4830794,91.5517946 58.5184057,88.9513318 C72.3681751,81.7987051 82,65.9288315 82,47.5 C82,22.3710439 64.09139,2 42,2 C19.90861,2 2,22.3710439 2,47.5" id="Oval-3" stroke="#000000" stroke-width="3"></path>
+    </g>
+</svg>

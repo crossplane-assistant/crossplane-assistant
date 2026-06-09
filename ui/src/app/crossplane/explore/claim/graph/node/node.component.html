@@ -1,0 +1,138 @@
+@if (_node) {
+  <div
+    class="graph-wrapper"
+    [class.root]="isRoot"
+    [class.first]="first"
+    [class.last]="last"
+    [class.uniq]="uniq"
+  >
+    @if (!isRoot) {
+      <div class="connector root"></div>
+    }
+    <div [className]="isRoot ? 'graph root' : 'graph'" class="children-join">
+      <div class="job-area d-flex">
+        <div
+          (click)="click()"
+          class="node"
+          [class.active]="isActive()"
+          [class.ghost]="!_node.manifest"
+        >
+          <div class="node-content">
+            <div class="logo-wrapper">
+              @if (kindLogo) {
+                <img [src]="kindLogo" alt="{{ _node.kind }}" />
+              } @else {
+                <div
+                  [ngStyle]="{ 'font-size.rem': kindInitialsFontSize }"
+                  class="logo"
+                >
+                  {{ kindInitials }}
+                </div>
+              }
+              <div class="name">
+                {{ _node.kind }}
+              </div>
+            </div>
+            <div class="info-wrapper">
+              <div class="name">
+                {{ _node.name }}
+              </div>
+              <div class="info-carac" title="namespace" *ngIf="_node.namespace">
+                <span
+                  title="namespace"
+                  class="material-symbols-outlined icon-small"
+                >
+                  select
+                </span>
+                {{ _node.namespace }}
+              </div>
+              <div
+                class="info-carac"
+                title="resource name"
+                *ngIf="resourceName"
+              >
+                <span
+                  title="resource"
+                  class="material-symbols-outlined icon-small light"
+                >
+                  extension
+                </span>
+                {{ resourceName }}
+              </div>
+
+              <div class="status-icons">
+                <span
+                  *ngIf="synced"
+                  title="synced"
+                  class="material-symbols-outlined condition {{
+                    synced.status
+                  }}"
+                  >directory_sync</span
+                >
+                <span
+                  *ngIf="ready"
+                  title="ready"
+                  class="material-symbols-outlined condition {{ ready.status }}"
+                  >heart_check</span
+                >
+                <span
+                  *ngIf="deleting"
+                  title="deleting"
+                  class="material-symbols-outlined condition warn"
+                  >auto_delete</span
+                >
+              </div>
+            </div>
+
+            <div class="permissions">
+              <span
+                class="material-symbols-outlined"
+                *ngIf="manifest?.spec?.managementPolicy == 'Observe'"
+              >
+                visibility
+              </span>
+              <span
+                class="material-symbols-outlined"
+                *ngIf="manifest?.spec?.managementPolicy == 'Delete'"
+              >
+                delete_forever
+              </span>
+            </div>
+          </div>
+
+          <div class="items-meta">
+            @if (_node.generation) {
+              <div class="meta-wrapper rev">v{{ _node.generation }}</div>
+            }
+
+            @if (getAge()) {
+              <div class="meta-wrapper age">
+                {{ getAge() | duration }}
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="childs-join" *ngIf="hasChild()"></div>
+      </div>
+
+      <div class="children-area" *ngIf="hasChild()">
+        @for (
+          child of node.children;
+          track child;
+          let first = $first, last = $last
+        ) {
+          <graph-node
+            [uniq]="node.children?.length == 1"
+            [first]="first && node.children?.length != 1"
+            [last]="last && node.children?.length != 1"
+            [node]="child"
+            [activeNodeId]="activeNodeId"
+            (select)="childClick($event)"
+          >
+          </graph-node>
+        }
+      </div>
+    </div>
+  </div>
+}

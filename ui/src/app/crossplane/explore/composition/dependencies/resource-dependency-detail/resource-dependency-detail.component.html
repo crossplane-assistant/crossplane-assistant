@@ -1,0 +1,31 @@
+Dependencies fields
+<ng-select (change)="onChange($event)">
+    @for ( link of item?.links; track link; let i = $index){
+        <ng-option [value]="i">{{ link.path }}</ng-option>
+    }
+</ng-select>
+
+<div class="detail">
+  <div>
+    <div class="detail-title">
+      <b>From path</b> (resources[{{
+        link?.src?.resourceRef?.index
+      }}]/patches[{{ link?.src?.patchIdx }}])
+    </div>
+    <ngx-monaco-editor
+      [options]="editorOptions"
+      [(ngModel)]="srcPatch"
+    ></ngx-monaco-editor>
+  </div>
+  <div>
+    <div class="detail-title">
+      <b>From path </b> (resources[{{
+        link?.dst?.resourceRef?.index
+      }}]/patches[{{ link?.dst?.patchIdx }}])
+    </div>
+    <ngx-monaco-editor
+      [options]="editorOptions"
+      [(ngModel)]="dstPatch"
+    ></ngx-monaco-editor>
+  </div>
+</div>

@@ -1,0 +1,89 @@
+kind: Composition
+apiVersion: apiextensions.crossplane.io/v1
+metadata:
+  name: partialdep.crossplane-assistant.io
+spec:
+  compositeTypeRef:
+    apiVersion: crossplane-assistant.io/v1alpha1
+    kind: PartialDep
+  mode: Resources
+  patchSets:
+    - name: NameAndNamespacePatch
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: spec.forProvider.manifest.metadata.name
+          policy:
+            fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
+          toFieldPath: spec.forProvider.manifest.metadata.namespace
+          policy:
+            fromFieldPath: Required
+
+  resources:
+    - name: StatusProvider
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: entity.crossplane-assistant.io/v1alpha1
+              kind: StatusProvider
+              metadata:
+                name: ${will-be-set-dynamically}
+                namespace: ${will-be-set-dynamically}
+              spec:
+                dummyField: "dummyValue"
+          providerConfigRef:
+            name: provider-kubernetes
+          readiness:
+            policy: DeriveFromObject
+
+      patches:
+        - type: PatchSet
+          patchSetName: NameAndNamespacePatch
+        - type: ToCompositeFieldPath
+          fromFieldPath: status.atProvider.manifest.status.service
+          toFieldPath: status.service
+
+      readinessChecks:
+        - type: MatchCondition
+          matchCondition:
+            type: Ready
+            status: "True"
+
+    - name: StatusConsumer
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: entity.crossplane-assistant.io/v1alpha1
+              kind: StatusConsumer
+              metadata:
+                name: ${injected}
+                namespace: ${injected}
+              spec:
+                input: ${injected}
+          providerConfigRef:
+            name: provider-kubernetes
+      patches:
+        - type: PatchSet
+          patchSetName: NamespacePatch
+
+        - type: CombineFromComposite
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: spec.forProvider.manifest.metadata.name
+          policy:
+            fromFieldPath: Required
+
+      readinessChecks:
+        - type: NonEmpty
+          fieldPath: status.atProvider.manifest.status.observedGeneration
+
+  writeConnectionSecretsToNamespace: crossplane-system
+  publishConnectionDetailsWithStoreConfigRef:
+    name: default

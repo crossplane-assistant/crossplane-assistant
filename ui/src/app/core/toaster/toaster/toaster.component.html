@@ -1,0 +1,17 @@
+<div class="toasts-wrapper">
+  @for (toast of toasts; track toast) {
+
+  <div style="z-index: 11">
+    <div class="toast" [ngClass]="toast.type">
+      <div class="toast-header">
+
+        <strong>{{toast.title}}</strong>
+        <button type="button" class="btn-close" (click)="close(toast)"></button>
+      </div>
+      <div class="toast-body">
+        {{toast.msg}}
+      </div>
+    </div>
+  </div>
+  }
+</div>

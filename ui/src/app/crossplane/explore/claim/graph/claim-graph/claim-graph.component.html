@@ -1,0 +1,21 @@
+@if (loading) {
+  <div class="loader">
+    <div class="content">
+      <div class="lds-dual-ring"></div>
+      Loading...
+    </div>
+  </div>
+} @else {
+  @if (root) {
+    <graph (select)="nodeSelected($event)" [root]="root"></graph>
+
+    <div class="btn floating" (click)="load()">
+      <span class="material-symbols-outlined">refresh</span>
+      Refresh
+    </div>
+    <span class="meta-info"
+      >Last refresh : {{ lastRefresh | date: 'medium' }} ( autoreload :
+      {{ reloadInSeconds }}s )</span
+    >
+  }
+}

@@ -1,0 +1,9 @@
+<div class="graph-wrapper">
+  @if (root) {
+    <graph-node
+      (select)="onSelect($event)"
+      [isRoot]="true"
+      [node]="root"
+    ></graph-node>
+  }
+</div>

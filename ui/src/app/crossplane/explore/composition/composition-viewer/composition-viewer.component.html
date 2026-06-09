@@ -1,0 +1,13 @@
+@if (manifest?.spec?.resources && initialized) {
+  @for (resource of manifest.spec.resources; track resource; let idx = $index) {
+    <app-dynamic-resource-viewer
+      [resourceContext]="{
+        graph: graph,
+        resource: resource,
+        resourceIndex: idx,
+        composition: manifest,
+      }"
+    >
+    </app-dynamic-resource-viewer>
+  }
+}

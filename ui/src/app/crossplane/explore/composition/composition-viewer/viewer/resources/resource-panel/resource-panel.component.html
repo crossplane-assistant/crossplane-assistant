@@ -1,0 +1,18 @@
+@if (resource) {
+  <div class="resource">
+    <div class="resource-header" (click)="onClick()">
+      <div>
+        <img class="provider-icon" src="./assets/logo/{{ resouceType }}.png" />
+      </div>
+      <div>
+        <div>Name : {{ resource.name }}</div>
+        <div>ApiVersion : {{ resource.base.apiVersion }}</div>
+        <div>Kind : {{ resource.base.kind }}</div>
+      </div>
+    </div>
+
+    @if (open) {
+      <ng-content></ng-content>
+    }
+  </div>
+}

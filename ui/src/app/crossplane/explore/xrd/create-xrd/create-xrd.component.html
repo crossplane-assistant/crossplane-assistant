@@ -1,0 +1,21 @@
+<app-sliding-panel [(visible)]="visible" title="New XRD">
+
+    <div ngProjectAs="panel-title" class="panel-action-header">
+        <span class="panel-title">
+            <span class="material-symbols-outlined icon"> description </span>
+            New XRD
+        </span>
+
+        <a (click)="save()" class="btn btn-secondary">
+            <span class="icon material-symbols-outlined">save</span> Save
+        </a>
+    </div>
+
+    <api-error-viewer [err]="createErr" ></api-error-viewer>
+
+    <div style="height: calc(100vh - 200px)">
+        <ngx-monaco-editor style="height: 100%" [options]="editorOptions"
+            [(ngModel)]="yamlManifest"></ngx-monaco-editor>
+    </div>
+
+</app-sliding-panel>

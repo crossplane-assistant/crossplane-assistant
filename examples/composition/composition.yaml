@@ -1,0 +1,47 @@
+kind: Composition
+apiVersion: apiextensions.crossplane.io/v1
+metadata:
+  name: xsamples.demo.crossplane-assistant.io
+spec:
+  compositeTypeRef:
+    apiVersion: demo.crossplane-assistant.io/v1alpha1
+    kind: XSample
+  mode: Resources
+  writeConnectionSecretsToNamespace: crossplane-system
+  publishConnectionDetailsWithStoreConfigRef:
+    name: default
+  patchSets:
+    - name: NameAndNamespacePatch
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: spec.forProvider.manifest.metadata.name
+          policy:
+            fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
+          toFieldPath: spec.forProvider.manifest.metadata.namespace
+          policy:
+            fromFieldPath: Required
+  resources:
+    - name: SamplePod
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Pod
+              metadata:
+                name: ${will-be-set-dynamically}
+                namespace: ${will-be-set-dynamically}
+              spec:
+                containers:
+                  - name: "sample"
+                    image: "nginx"
+          providerConfigRef:
+            name: provider-kubernetes
+      patches:
+        - type: PatchSet
+          patchSetName: NameAndNamespacePatch

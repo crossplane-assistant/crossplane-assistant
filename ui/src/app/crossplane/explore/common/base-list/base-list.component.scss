@@ -1,0 +1,90 @@
+ngx-monaco-editor {
+  height: 100%;
+}
+
+.list-page {
+  margin: 10px 20px;
+}
+
+table {
+  //font-size: 15px;
+
+  width: 98%;
+  //  border: solid lightgrey 1px;
+  padding: 20px;
+
+  thead {
+    td {
+      font-weight: 600;
+      height: 30px;
+      border-bottom: solid 1px #e5e4e4;
+      color: #676767;
+      padding: 12px 0;
+    }
+  }
+
+  tbody {
+    td {
+      border-top: solid 1px #f1f1f1;
+      height: 35px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    // Don't show border-top for first row
+    :first-child {
+      td {
+        border-top: none;
+      }
+    }
+  }
+}
+
+.status {
+  padding: 4px 7px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+
+  &.success {
+    background-color: #28e29f1c;
+    color: #11a16d;
+  }
+
+  &.error {
+    background-color: rgba(252, 89, 83, 0.16);
+    color: #fc5953;
+  }
+}
+
+span.age {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #565656;
+}
+.icons-bar{
+  display: flex;
+  &.end{
+      justify-content: flex-end;
+  }
+  margin: 10px;
+}
+/************  Base List ************/
+
+h1 {
+
+  display: flex;
+  align-items: center;
+
+  span.material-symbols-outlined {
+    font-size: 30px;
+    font-weight: 200;
+    margin-right: 5px;
+  }
+}
+
+.desc{
+  font-size: 14px;
+  margin: 10px 0 20px 0;
+  font-weight: 300;
+}

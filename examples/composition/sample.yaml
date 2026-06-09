@@ -1,0 +1,7 @@
+apiVersion: demo.crossplane-assistant.io/v1alpha1
+kind: XCSample
+metadata:
+  name: sample
+  namespace: default
+spec:
+  name: sample

@@ -1,0 +1,92 @@
+<div class="list-page">
+    <h1>
+        <span class="material-symbols-outlined">extension</span> Providers
+    </h1>
+
+    <div class="desc">
+        List of providers installed on the cluster. You can find more information about providers
+        on the official <a href="https://docs.crossplane.io/latest/concepts/providers/"
+            target="_blank">documentation</a>.
+        For more providers, you can visit the <a href="https://marketplace.upbound.io/providers"
+            target="_blank">Crossplane Marketplace</a>.
+    </div>
+
+
+    <div class="icons-bar" title="create a new Provider">
+        <a (click)="isNewVisible = !isNewVisible" class="btn btn-secondary">
+            <span class="icon material-symbols-outlined">add</span> Create Provider
+        </a>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <td>Name</td>
+                <td>Installed</td>
+                <td>Healthy</td>
+                <td>Package</td>
+                <td>Age</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr *ngFor="let provider of providers" (click)="showSidePanel(provider.manifest)">
+                <td>{{ provider.manifest.metadata.name }}</td>
+                <td>
+                    <span class="status" [class.success]="provider.installed == 'True'"
+                        [class.error]="provider.installed == 'False'">{{ provider.installed }}
+                    </span>
+                </td>
+
+                <td>
+                    <span class="status" [class.success]="provider.healthy == 'True'"
+                        [class.error]="provider.healthy == 'False'">{{ provider.healthy }}
+                    </span>
+                </td>
+                <td>{{ provider.manifest?.spec?.package }}</td>
+                <td>{{ provider.manifest?.metadata?.creationTimestamp | duration }}</td>
+                <td>{{ provider.manifest?.metadata?.deletionTimestamp | duration }}</td>
+                <td><app-market-link type="providers" [image]="provider.manifest?.spec?.package"></app-market-link></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Create a new provider -->
+    <app-create-provider [visible]="isNewVisible" (closePanel)="onCreateChange($event)"></app-create-provider>
+
+    <!-- View selected provider-->
+    <app-sliding-panel [(visible)]="isDetailVisible" [title]="title">
+
+        <div ngProjectAs="panel-title" class="panel-action-header">
+            <span class="panel-title">
+                <span class="material-symbols-outlined icon">extension</span>
+                {{title}}
+            </span>
+            <a (click)="delete(manifest.metadata?.name)" class="btn btn-secondary error">
+                <span class="icon material-symbols-outlined">delete</span> Delete
+            </a>
+        </div>
+
+        <div class="tabs-component-wrapper">
+            <div class="tabs">
+                <div [class.active]="activeTab == 'manifest'" (click)="setTab('manifest')">
+                    <span class="material-symbols-outlined icon">view_agenda</span>
+                    Manifest
+                </div>
+                <div [class.active]="activeTab == 'event'" (click)="setTab('event')">
+                    <span class="material-symbols-outlined icon">event</span>
+                    Event
+                </div>
+            </div>
+
+            @if (activeTab == 'manifest') {
+            <ngx-monaco-editor [options]="editorOptions" [(ngModel)]="yamlManifest"></ngx-monaco-editor>
+            }
+            @if (activeTab == 'event') {
+            <app-events-list [events]="events"></app-events-list>
+            }
+        </div>
+    </app-sliding-panel>
+</div>

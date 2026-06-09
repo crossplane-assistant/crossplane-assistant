@@ -1,0 +1,51 @@
+@if (resourceContext && resourceContext.resource) {
+  <app-resource-panel
+    [resouceType]="'kubernetes'"
+    [resource]="resourceContext.resource"
+  >
+    <div class="tabs">
+      <div
+        [class.active]="activeTab == 'kubernetes'"
+        (click)="setTab('kubernetes')"
+      >
+        Kubernetes
+      </div>
+      <div
+        [class.active]="activeTab == 'manifest'"
+        (click)="setTab('manifest')"
+      >
+        YAML
+      </div>
+      <div
+        [class.active]="activeTab == 'dependencies'"
+        (click)="setTab('dependencies')"
+      >
+        Dependencies
+      </div>
+    </div>
+
+    @if (activeTab == 'kubernetes') {
+      <div class="detail" [style]="k8sEditorHandler.style">
+        <ngx-monaco-editor
+          style="height: 100%"
+          [options]="k8sEditorHandler.options"
+          [(ngModel)]="k8sEditorHandler.content"
+        ></ngx-monaco-editor>
+      </div>
+    }
+    @if (activeTab == 'manifest') {
+      <div class="detail" [style]="editorHandler.style">
+        <ngx-monaco-editor
+          style="height: 100%"
+          [options]="editorHandler.options"
+          [(ngModel)]="editorHandler.content"
+        ></ngx-monaco-editor>
+      </div>
+    }
+    @if (activeTab == 'dependencies') {
+      <app-resource-dependency-viewer
+        [resourceContext]="resourceContext"
+      ></app-resource-dependency-viewer>
+    }
+  </app-resource-panel>
+}

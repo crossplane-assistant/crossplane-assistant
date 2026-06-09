@@ -1,0 +1,61 @@
+<div class="page-top">
+  <div class="breadcrumb">
+    <a routerLink="/explore/claims" class="link-icon">
+      <span class="material-symbols-outlined icon"> deployed_code_account </span>
+    </a>
+    <a routerLink="/explore/claims">Claims</a> / {{ claimName }}
+  </div>
+</div>
+
+<div>
+  <app-claim-graph
+    (select)="onSelectNode($event)"
+    [ref]="ref"
+  ></app-claim-graph>
+</div>
+
+<app-sliding-panel [(visible)]="isDetailVisible" >
+  <div ngProjectAs="panel-title" class="panel-action-header">
+    <span class="panel-title">
+      <span class="material-symbols-outlined icon">deployed_code_account</span>
+      {{title}}
+    </span>
+  </div>
+
+  <div class="tabs-component-wrapper">
+    <div class="tabs">
+      <div
+        [class.active]="activeTab == 'manifest'"
+        (click)="setTab('manifest')"
+      >
+        Manifest
+      </div>
+      <div
+        *ngIf="resourcesTemplate"
+        [class.active]="activeTab == 'template'"
+        (click)="setTab('template')"
+      >
+        Template
+      </div>
+      <div [class.active]="activeTab == 'event'" (click)="setTab('event')">
+        Event
+      </div>
+    </div>
+
+    @if (activeTab == 'manifest') {
+      <ngx-monaco-editor
+        [options]="editorOptions"
+        [(ngModel)]="yamlManifest"
+      ></ngx-monaco-editor>
+    }
+    @if (activeTab == 'template') {
+      <ngx-monaco-editor
+        [options]="editorOptions"
+        [(ngModel)]="resourcesTemplate"
+      ></ngx-monaco-editor>
+    }
+    @if (activeTab == 'event') {
+      <app-events-list [events]="events"></app-events-list>
+    }
+  </div>
+</app-sliding-panel>

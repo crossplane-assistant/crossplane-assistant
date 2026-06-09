@@ -1,0 +1,117 @@
+<div class="list-page">
+
+  <h1>
+    <span class="material-symbols-outlined"> description </span> Composite Resource Definitions
+  </h1>
+
+  <div class="desc">
+    List of composite resource definitions (XRD) installed on the cluster. You can find more information about composite
+    resource definition
+    on the official <a href="https://docs.crossplane.io/latest/concepts/composite-resource-definitions/"
+      target="_blank">documentation</a>.
+  </div>
+
+
+  <div class="icons-bar" title="create a new XRD">
+    <a (click)="isNewVisible = !isNewVisible" class="btn btn-secondary">
+      <span class="icon material-symbols-outlined">add</span> Create XRD
+    </a>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <td>Name</td>
+        <td>Established</td>
+        <td>Offered</td>
+        <td>Kind</td>
+        <td>Claim</td>
+        <td>Age</td>
+        <td>Del.</td>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let xrd of xrds" (click)="showSidePanel(xrd.manifest)">
+        <td>{{ xrd.manifest.metadata.name }}</td>
+        <td>
+          <span class="status" [ngClass]="{
+              success: $any(xrd.established) == 'True',
+              error: 'False' === $any(xrd.established),
+            }">
+            {{ xrd.established }}
+          </span>
+        </td>
+        <td>
+          <span class="status" [ngClass]="{
+              success: $any(xrd.offered) == 'True',
+              error: 'False' === $any(xrd.offered),
+            }">
+            {{ xrd.offered }}
+          </span>
+        </td>
+
+        <td>{{xrd.manifest.spec.names.kind}}</td>
+        <td>{{xrd.manifest.spec.claimNames.kind}}</td>
+
+        <td>
+          <span class="age">{{ xrd.age | duration }}</span>
+        </td>
+        <td>
+          <span class="age">{{
+            xrd.manifest.metadata.deletionTimestamp | duration
+            }}</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Create a new XRD -->
+  <app-create-xrd [visible]="isNewVisible" (closePanel)="onCreateChange($event)"></app-create-xrd>
+
+  <!-- View selected XRD-->
+  <app-sliding-panel [(visible)]="isDetailVisible" [title]="title">
+
+    <div ngProjectAs="panel-title" class="panel-action-header">
+      <span class="panel-title">
+        <span class="material-symbols-outlined icon"> description </span>
+        {{title}}
+      </span>
+      <a (click)="delete(manifest.metadata?.name)" class="btn btn-secondary error">
+        <span class="icon material-symbols-outlined">delete</span> Delete
+      </a>
+    </div>
+
+    <div class="tabs-component-wrapper">
+      <div class="tabs">
+        <div [class.active]="activeTab == 'manifest'" (click)="setTab('manifest')">
+          <span class="material-symbols-outlined icon">view_agenda</span>
+          Manifest
+        </div>
+        <div [class.active]="activeTab == 'schema'" (click)="setTab('schema')">
+          <span class="material-symbols-outlined icon">contract</span>
+          Schema
+        </div>
+
+        <div [class.active]="activeTab == 'event'" (click)="setTab('event')">
+          <span class="material-symbols-outlined icon">event</span>
+          Event
+        </div>
+      </div>
+
+      @if (activeTab == 'manifest') {
+      <ngx-monaco-editor [options]="editorOptions" [(ngModel)]="yamlManifest"></ngx-monaco-editor>
+      }
+      @if (activeTab == 'schema') {
+
+      <h3>Schema</h3>
+      Version : {{manifest.spec.versions[0].name}}
+
+      <app-schema-viewer [schema]="manifest.spec.versions[0].schema.openAPIV3Schema"></app-schema-viewer>
+      }
+      @if (activeTab == 'event') {
+      <app-events-list [events]="events"></app-events-list>
+      }
+    </div>
+  </app-sliding-panel>
+</div>

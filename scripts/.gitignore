@@ -1,0 +1,10 @@
+.idea/
+vendor/
+tmp/
+crossplane-assistant
+crossplane-assistant-api
+node_modules/
+.angular/
+.vscode/
+private/
+test/

@@ -1,0 +1,100 @@
+kind: Composition
+apiVersion: apiextensions.crossplane.io/v1
+metadata:
+  name: xsamples.demo.crossplane-assistant.io
+spec:
+  compositeTypeRef:
+    apiVersion: demo.crossplane-assistant.io/v1alpha1
+    kind: XSample
+  mode: Resources
+  writeConnectionSecretsToNamespace: crossplane-system
+  publishConnectionDetailsWithStoreConfigRef:
+    name: default
+  patchSets:
+    - name: NameAndNamespacePatch
+      patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-name]
+          toFieldPath: spec.forProvider.manifest.metadata.name
+          policy:
+            fromFieldPath: Required
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.labels[crossplane.io/claim-namespace]
+          toFieldPath: spec.forProvider.manifest.metadata.namespace
+          policy:
+            fromFieldPath: Required
+  resources:
+    - name: SamplePod
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Pod
+              metadata:
+                name: ${will-be-set-dynamically}
+                namespace: ${will-be-set-dynamically}
+              spec:
+                containers:
+                  - name: "sample"
+                    image: "nginx"
+          providerConfigRef:
+            name: provider-kubernetes
+      patches:
+        - type: PatchSet
+          patchSetName: NameAndNamespacePatch
+
+
+    - name: SamplePod2
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Pod
+              metadata:
+                name: ${will-be-set-dynamically}
+                namespace: ${will-be-set-dynamically}
+              spec:
+                containers:
+                  - name: "sample"
+                    image: "nginx"
+          providerConfigRef:
+            name: provider-kubernetes
+      patches:
+        - type: PatchSet
+          patchSetName: NameAndNamespacePatch
+
+    - name: SamplePod3
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: ConfigMap
+              metadata:
+                name: game-demo
+              data:
+                # property-like keys; each key maps to a simple value
+                player_initial_lives: "3"
+                ui_properties_file_name: "user-interface.properties"
+
+                # file-like keys
+                game.properties: |
+                  enemy.types=aliens,monsters
+                  player.maximum-lives=5
+                user-interface.properties: |
+                  color.good=purple
+                  color.bad=yellow
+                  allow.textmode=true
+          providerConfigRef:
+            name: provider-kubernetes
+      patches:
+        - type: PatchSet
+          patchSetName: NameAndNamespacePatch
