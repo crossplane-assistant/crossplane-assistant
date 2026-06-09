@@ -137,22 +137,19 @@ export class NodeComponent {
       if (this.manifest.apiVersion.startsWith('kubernetes.crossplane.io')) {
         return '/assets/logo/kubernetes.png';
       }
-      if (this.manifest.apiVersion.indexOf('gcp.upbound.io') >= 0) {
+      if (this.manifest.apiVersion.includes('.gcp.')) {
         return '/assets/logo/gcp.png';
       }
-      if (this.manifest.apiVersion.indexOf('gcp.crossplane.io') >= 0) {
-        return '/assets/logo/gcp.png';
-      }
-      if (this.manifest.apiVersion.startsWith('azure.crossplane.io')) {
+      if (this.manifest.apiVersion.includes('.azure.')) {
         return '/assets/logo/azure.png';
       }
-      if (this.manifest.apiVersion.startsWith('aws.crossplane.io')) {
+      if (this.manifest.apiVersion.includes('.aws.')) {
         return '/assets/logo/aws.png';
       }
-      if (this.manifest.apiVersion.startsWith('postgresql.sql.crossplane.io')) {
+      if (this.manifest.apiVersion.includes('.postgresql.')) {
         return '/assets/logo/postgresql.png';
       }
-      if (this.manifest.apiVersion.startsWith('aiven.io')) {
+      if (this.manifest.apiVersion.includes('.aiven.')) {
         return '/assets/logo/aiven.png';
       }
       if (this.manifest.apiVersion.startsWith('external-secrets.io')) {

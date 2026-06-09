@@ -12,8 +12,10 @@ global:
   image:
     tag: "latest"
 
+# UI configuration - DEPRECATED: UI is now embedded in the unified binary
+# This section is kept for backwards compatibility but ui.enabled should be set to false
 ui:
-  enabled: true
+  enabled: false
   name: ui
   image:
     repository: ldassonville/crossplane-assistant-ui
@@ -93,8 +95,9 @@ ui:
 api:
   enabled: true
   name: api
+  # Unified binary image containing both API and embedded frontend
   image:
-    repository: ldassonville/crossplane-assistant-api
+    repository: ldassonville/crossplane-assistant
     pullPolicy: IfNotPresent
     tag: "latest"
   labels:

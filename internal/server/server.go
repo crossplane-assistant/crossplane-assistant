@@ -1,8 +1,14 @@
 package server
 
 import (
+	"io"
+	"io/fs"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+
 	_ "github.com/crossplane-contrib/provider-kubernetes/apis/object/v1alpha1"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/client"
 	k8sv1alpha1 "github.com/ldassonville/crossplane-assistant/internal/crossplane/client/kubernetes/v1alpha1"
@@ -28,16 +34,15 @@ type ApiServer struct {
 }
 
 // Start launch the kubeAssistant server
-func (a *ApiServer) Start() error {
+func (a *ApiServer) Start(staticFS fs.FS) error {
 
 	gin.SetMode(gin.ReleaseMode)
 	a.e = gin.Default()
 	a.e.UseRawPath = true
 	a.e.Use(gin.Recovery())
 
-	config := cors.DefaultConfig()
-	config.AllowAllOrigins = true
-	a.e.Use(cors.New(config))
+	// Setup development middleware (CORS) if running in dev mode
+	a.setupDevMiddleware()
 
 	restConfig, err := kubernetes.GetkubeConfig()
 	if err != nil {
@@ -147,8 +152,79 @@ func (a *ApiServer) Start() error {
 	a.e.Handle("POST", "/crossplane/managedresources", managedResourceHandler.Create)
 	a.e.Handle("PUT", "/crossplane/managedresources", managedResourceHandler.Update)
 	a.e.Handle("DELETE", "/crossplane/managedresources/:ref/:name", managedResourceHandler.Delete)
-	if err := a.e.Run(":8080"); err != nil {
+
+	// Setup static file serving (must be after API routes for proper precedence)
+	a.setupStaticRoutes(staticFS)
+
+	// Get port from environment variable, default to 8080
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	if err := a.e.Run(":" + port); err != nil {
 		return errors.Wrap(err, "fail to start api server")
 	}
 	return nil
+}
+
+// setupStaticRoutes configures static file serving with SPA fallback
+func (a *ApiServer) setupStaticRoutes(staticFS fs.FS) {
+	// Serve static files with custom handler for SPA fallback
+	a.e.NoRoute(func(c *gin.Context) {
+		path := c.Request.URL.Path
+
+		// Try to open the file from embedded filesystem
+		file, err := staticFS.Open(strings.TrimPrefix(path, "/"))
+		if err == nil {
+			file.Close()
+			// File exists, serve it with appropriate cache headers
+			a.serveStaticFile(c, staticFS, path)
+			return
+		}
+
+		// File doesn't exist - check if it's an explicit file request
+		ext := filepath.Ext(path)
+		if ext != "" && (ext == ".js" || ext == ".css" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".gif" || ext == ".svg" || ext == ".woff" || ext == ".woff2" || ext == ".ttf" || ext == ".ico") {
+			// Explicit file request that doesn't exist - return 404
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		// Not a file request - serve index.html for SPA routing
+		a.serveStaticFile(c, staticFS, "/index.html")
+	})
+}
+
+// serveStaticFile serves a file from the embedded filesystem with appropriate cache headers
+func (a *ApiServer) serveStaticFile(c *gin.Context, staticFS fs.FS, path string) {
+	path = strings.TrimPrefix(path, "/")
+
+	file, err := staticFS.Open(path)
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	// Get file info for content type detection
+	stat, err := file.Stat()
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	// Set cache headers based on file type
+	if path == "index.html" || strings.HasSuffix(path, "/index.html") {
+		// No cache for index.html to ensure latest version
+		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+		c.Header("Pragma", "no-cache")
+		c.Header("Expires", "0")
+	} else {
+		// Long-term cache for content-hashed assets
+		c.Header("Cache-Control", "public, max-age=31536000, immutable")
+	}
+
+	// Serve the file
+	http.ServeContent(c.Writer, c.Request, path, stat.ModTime(), file.(io.ReadSeeker))
 }

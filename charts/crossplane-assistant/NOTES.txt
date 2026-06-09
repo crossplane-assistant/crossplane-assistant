@@ -1,1 +1,9 @@
-The Crossplane Assistant UI can be accessed via port {{ .Values.ui.service.port }} on the following DNS name from within your cluster:
+The Crossplane Assistant can be accessed via port {{ .Values.api.service.port }} on the following DNS name from within your cluster:
+
+{{ include "crossplane-assistant.api.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.api.service.port }}
+
+The unified binary serves both the API and the embedded frontend.
+{{- if .Values.ui.enabled }}
+
+Note: Separate UI deployment is enabled (legacy mode). Consider disabling it by setting ui.enabled=false.
+{{- end }}

@@ -41,28 +41,84 @@ helm install crossplane-assistant \
     ./charts/crossplane-assistant
 ```
 
+The unified binary serves both the API and the embedded frontend on port 8080 by default.
 
 ### Usage docker
 
-Launch the API and UI as docker
-
-```
-docker run --name crossplane-assistant-api -p 8080:8080 ldassonville/crossplane-assistant-api:latest
-docker run --name crossplane-assistant-ui -p 4200:8080 crossplane-assistant-ui:latest
-```
-
-Then go on [http://localhost:4200](http://localhost:4200)
-
-### Run in local
+Launch the unified binary as a Docker container:
 
 ```bash
-make docker front
-make all-api
-docker run -tid --name crossplane-assistant-ui -p 3000:8080 crossplane-assistant/crossplane-assistant-ui
-./crossplane-assistant-api
+docker run --name crossplane-assistant -p 8080:8080 ldassonville/crossplane-assistant:latest
 ```
 
-Then go on [http://localhost:3000](http://localhost:3000)
+Then go to [http://localhost:8080](http://localhost:8080)
+
+The unified binary contains both the API and the Angular frontend. You can configure the port using the `PORT` environment variable:
+
+```bash
+docker run --name crossplane-assistant -p 9000:9000 -e PORT=9000 ldassonville/crossplane-assistant:latest
+```
+
+### Build and Run Locally
+
+#### Production Build
+
+Build the unified binary with embedded frontend:
+
+```bash
+make all
+```
+
+This will:
+1. Build the Angular frontend (`npm ci && npm run build`)
+2. Embed the frontend assets into the Go binary
+3. Create a single `crossplane-assistant` executable
+
+Run the binary:
+
+```bash
+./crossplane-assistant
+```
+
+Then go to [http://localhost:8080](http://localhost:8080)
+
+To use a different port:
+
+```bash
+PORT=9000 ./crossplane-assistant
+```
+
+#### Development Workflow
+
+For faster development with live reload, you can run both servers with a single command:
+
+```bash
+make dev
+```
+
+This will start:
+- Angular dev server on [http://localhost:4200](http://localhost:4200) (with live reload)
+- Go API on port 8080 (with CORS enabled for cross-origin requests)
+
+Press Ctrl+C to stop both servers.
+
+**Manual setup (alternative):**
+
+If you prefer to run them separately in different terminals:
+
+1. Start the Angular dev server (with live reload):
+```bash
+cd ui
+npm install
+ng serve
+```
+
+2. In a separate terminal, run the Go API in dev mode (with CORS enabled):
+```bash
+go run -tags dev .
+```
+
+The Angular dev server runs on [http://localhost:4200](http://localhost:4200) and proxies API requests to the backend on port 8080.
 
 
 ## Documentation

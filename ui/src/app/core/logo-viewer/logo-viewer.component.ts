@@ -53,7 +53,19 @@ export class LogoViewerComponent implements OnInit {
     if (this.apiVersion.startsWith('kubernetes.crossplane.io')) {
       return '/assets/logo/kubernetes.png';
     }
+    if (this.apiVersion.includes('gcp.')) {
+      return '/assets/logo/gcp.png';
+    }
+    if (this.apiVersion.includes('gcp.m.upbound.io')) {
+      return '/assets/logo/gcp.png';
+    }
     if (this.apiVersion.indexOf('gcp.upbound.io') >= 0) {
+      return '/assets/logo/gcp.png';
+    }
+    if (this.apiVersion.indexOf('cloudplatform.gcp.m.upbound.io') >= 0) {
+      return '/assets/logo/gcp.png';
+    }
+    if (this.apiVersion.indexOf('pubsub.gcp.m.upbound.io') >= 0) {
       return '/assets/logo/gcp.png';
     }
     if (this.apiVersion.indexOf('gcp.crossplane.io') >= 0) {
