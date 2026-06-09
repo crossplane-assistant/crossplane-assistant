@@ -1,11 +1,8 @@
-<img alt="Crossplane-Assistant" src="./docs/assets/crossplane-assistant.svg" width="100px">
+<img alt="Crossplane-Assistant" src="./docs/assets/plane-pilot-01.png" width="330px">
 
 # Crossplane Assistant
 
 Crossplane Assistant helps you developing CRDs and Compositions (correlation between objects) with Crossplane.
-
-## Getting Started
-$ helm upgrade …
 
 ## Features
 
@@ -23,15 +20,11 @@ $ helm upgrade …
 
 Watch the Composite resources
 
-![Screenshot]()
+![Screenshot](./docs/assets/graph-capture.png)
 
 Show Live composition in editor
 
-![Screenshot]()
-
 Show dependencies
-
-![Screenshot]()
 
 More screenshots are available in the [Documentation section Screenshots](#).
 
@@ -54,10 +47,11 @@ helm install crossplane-assistant \
 Launch the API and UI as docker
 
 ```
-docker run --name crossplane-assistant-api  -p 8080:8080 ldassonville/crossplane-assistant-api:latest
+docker run --name crossplane-assistant-api -p 8080:8080 ldassonville/crossplane-assistant-api:latest
 docker run --name crossplane-assistant-ui -p 4200:8080 crossplane-assistant-ui:latest
 ```
-then go on [crossplane-assistant-ui](http://localhost:4200)
+
+Then go on [http://localhost:4200](http://localhost:4200)
 
 ### Run in local
 
@@ -68,7 +62,7 @@ docker run -tid --name crossplane-assistant-ui -p 3000:8080 crossplane-assistant
 ./crossplane-assistant-api
 ```
 
-Then go on [crossplane-assistant-ui](http://localhost:3000)
+Then go on [http://localhost:3000](http://localhost:3000)
 
 
 ## Documentation
