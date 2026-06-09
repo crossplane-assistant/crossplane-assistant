@@ -57,7 +57,7 @@ export class LogoViewerComponent implements OnInit {
       return '/assets/logo/gcp.png';
     }
     if (this.apiVersion.indexOf('gcp.crossplane.io') >= 0) {
-      return '/assets/logo/gcp-old.png';
+      return '/assets/logo/gcp.png';
     }
     if (this.apiVersion.startsWith('azure.crossplane.io')) {
       return '/assets/logo/azure.png';

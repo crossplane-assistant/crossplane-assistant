@@ -141,7 +141,7 @@ export class NodeComponent {
         return '/assets/logo/gcp.png';
       }
       if (this.manifest.apiVersion.indexOf('gcp.crossplane.io') >= 0) {
-        return '/assets/logo/gcp-old.png';
+        return '/assets/logo/gcp.png';
       }
       if (this.manifest.apiVersion.startsWith('azure.crossplane.io')) {
         return '/assets/logo/azure.png';
