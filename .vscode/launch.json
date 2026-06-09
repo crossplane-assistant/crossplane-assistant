@@ -1,0 +1,42 @@
+{
+    // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
+    // Pointez pour afficher la description des attributs existants.
+    // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Go: Debug",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/api/api.go",
+            "debugAdapter": "dlv-dap",
+            // "port": 2345,
+            // "host": "127.0.0.1",
+            "env": {
+                "DEBUG": "1",
+                "DD_AGENT_HOST": "127.0.0.1",
+                "DD_TRACE_AGENT_PORT": "8126",
+                "DD_ENV": "local",
+                "DD_SERVICE": "ctrlplane_backend",
+                "DD_TRACE_DEBUG": "false",
+                "DD_TRACE_ENABLED": "false",
+                "CONFIGURATION_PATH": "${workspaceFolder}/",
+                "LOG_FORMAT": "text",
+            },
+            "args": [],
+            "showLog": true,
+            "logOutput": "dap",
+        },
+        {
+            "name": "Go: Run",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/api/api.go",
+            "env": {
+                "CONFIGURATION_PATH": "${workspaceFolder}"
+            }
+        }
+    ]
+}
