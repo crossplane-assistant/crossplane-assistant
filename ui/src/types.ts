@@ -71,6 +71,43 @@ export function encodeRef(ref: Ref): string {
   );
 }
 
+export function decodeRef(ref: string): Ref {
+  const decoded = decodeURIComponent(ref);
+  const [apiVersion, kind, name, namespace] = decoded.split(':');
+  return {
+    apiVersion,
+    kind,
+    name,
+    namespace: namespace || undefined,
+  };
+}
+
+export interface ClaimCondition {
+  type: string;
+  status: string;
+  reason?: string;
+  message?: string;
+}
+
+export interface ClaimTreeNode {
+  kind: string;
+  version: string;
+  index?: number;
+  namespace?: string;
+  name: string;
+  uid?: string;
+  resourceVersion?: string;
+  generation?: number;
+  conditions?: ClaimCondition[];
+  manifest?: any;
+  metaKind: string;
+  children?: ClaimTreeNode[];
+}
+
+export interface ClaimTree {
+  root: ClaimTreeNode;
+}
+
 export interface ManagedResourceKind {
   provider: string;
   group: string;

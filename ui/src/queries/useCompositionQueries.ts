@@ -65,3 +65,11 @@ export function useCreateComposition() {
     },
   });
 }
+
+export function useCompositionRevision(name: string | undefined) {
+  return useQuery<any>({
+    queryKey: ['composition-revision', name],
+    queryFn: () => fetchJson<any>(`/crossplane/compositionrevisions/${name}`),
+    enabled: !!name,
+  });
+}

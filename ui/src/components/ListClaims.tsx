@@ -1,7 +1,9 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { GitFork } from 'lucide-react';
 import { useClaims, useDeleteClaim } from '../queries/useClaimQueries';
 import { ResourceListView } from './ResourceListView';
-import { Ref } from '../types';
+import { Ref, encodeRef } from '../types';
 
 export const ListClaims: React.FC = () => {
   const { data: claims = [], isLoading, error } = useClaims();
@@ -50,6 +52,23 @@ export const ListClaims: React.FC = () => {
           <span className="inline-flex items-center gap-1.5 font-medium text-xs text-slate-600">
             <span className={`w-2.5 h-2.5 rounded-full ${color}`} /> {status}
           </span>
+        );
+      },
+    },
+    {
+      header: 'Graph',
+      render: (c: any) => {
+        const ref = getRowRef(c);
+        const encoded = encodeRef(ref);
+        return (
+          <Link
+            to={`/explore/claims/${encoded}`}
+            onClick={(e) => e.stopPropagation()} // Prevent row selection details from triggering
+            className="inline-flex items-center justify-center p-1.5 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-slate-400 transition-all cursor-pointer"
+            title="View Dependency Graph"
+          >
+            <GitFork className="w-4 h-4 transform rotate-90" />
+          </Link>
         );
       },
     },

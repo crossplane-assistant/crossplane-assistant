@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-do
 import { Library, Link2, Boxes, Server, Box, Cpu } from 'lucide-react';
 import { ListCompositions } from './components/ListCompositions';
 import { ListClaims } from './components/ListClaims';
+import { ClaimDetailsView } from './components/ClaimDetailsView';
 import { ListXrds } from './components/ListXrds';
 import { ListProviders } from './components/ListProviders';
 import { ListFunctions } from './components/ListFunctions';
@@ -73,26 +74,13 @@ const ExplorerLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
   );
 };
 
-// Placeholder for other routes
-const PlaceholderView: React.FC<{ title: string }> = ({ title }) => (
-  <div className="list-page space-y-4">
-    <h1 className="text-3xl font-bold flex items-center gap-3">
-      {title}
-    </h1>
-    <div className="p-8 border border-slate-200 border-dashed rounded-xl bg-white text-center text-slate-500">
-      <p className="text-lg font-medium">Under React 19 Refactor</p>
-      <p className="text-sm mt-1 text-slate-400">The {title} view is currently being refactored into React components.</p>
-    </div>
-  </div>
-);
-
 const AppRoutes: React.FC = () => {
   return (
     <ExplorerLayout>
       <Routes>
         <Route path="/" element={<Link to="/explore/xrds" className="text-blue-500 hover:underline">Go to Explorer</Link>} />
         <Route path="/explore/claims" element={<ListClaims />} />
-        <Route path="/explore/claims/:ref" element={<PlaceholderView title="Claim Details" />} />
+        <Route path="/explore/claims/:ref" element={<ClaimDetailsView />} />
         {/* We route "/explore/compositions" to the real ListCompositions component */}
         <Route path="/explore/compositions" element={<ListCompositions />} />
         <Route path="/explore/managed-resources" element={<ListManagedResources />} />

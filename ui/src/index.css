@@ -8,3 +8,73 @@ body {
   background-color: #f8fafc;
   color: #0f172a;
 }
+
+/* Recursive Graphe Layout Connectors */
+.graph-container {
+  --link-color: #cbd5e1; /* slate-300 */
+}
+
+.graph-wrapper {
+  display: flex;
+  border-left: 1px solid var(--link-color);
+  position: relative;
+}
+
+.graph-wrapper.root {
+  border-left: none;
+  margin: 10px;
+}
+
+.graph-wrapper > .connector {
+  border-bottom: 1px solid var(--link-color);
+  width: 24px;
+  height: 50px;
+  position: relative;
+}
+
+.graph-wrapper > .connector:after {
+  content: '►';
+  color: var(--link-color);
+  left: 12px;
+  position: absolute;
+  top: 40px;
+  font-size: 11px;
+}
+
+.graph-wrapper.first {
+  border-left: none;
+}
+
+.graph-wrapper.first > .connector {
+  margin-top: 50px;
+  height: 50px;
+  border: none;
+  border-left: 1px solid var(--link-color);
+  border-top: 1px solid var(--link-color);
+}
+
+.graph-wrapper.first > .connector:after {
+  top: -6px;
+}
+
+.graph-wrapper.last {
+  border-left: none;
+}
+
+.graph-wrapper.last > .connector {
+  margin-top: 0;
+  border-left: 1px solid var(--link-color);
+  border-bottom: 1px solid var(--link-color);
+  height: 50px;
+}
+
+.graph-wrapper.uniq {
+  border-left: none;
+}
+
+.graph-wrapper.uniq > .connector {
+  margin-top: 0;
+  border: none;
+  border-bottom: 1px solid var(--link-color);
+  height: 50px;
+}

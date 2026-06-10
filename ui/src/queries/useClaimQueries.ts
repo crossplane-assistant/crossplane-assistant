@@ -28,3 +28,33 @@ export function useDeleteClaim() {
     },
   });
 }
+
+export function useClaim(ref: Ref | undefined) {
+  return useQuery<any>({
+    queryKey: ['claim', ref],
+    queryFn: async () => {
+      if (!ref) throw new Error('Ref is required');
+      const encoded = encodeRef(ref);
+      const res = await fetch(`${API_BASE}/${encoded}`);
+      if (!res.ok) throw new Error(`Claim fetch failed: ${res.statusText}`);
+      return res.json();
+    },
+    enabled: !!ref,
+    refetchInterval: 15000,
+  });
+}
+
+export function useClaimTree(ref: Ref | undefined) {
+  return useQuery<any>({
+    queryKey: ['claim-tree', ref],
+    queryFn: async () => {
+      if (!ref) throw new Error('Ref is required');
+      const encoded = encodeRef(ref);
+      const res = await fetch(`${API_BASE}/${encoded}/tree`);
+      if (!res.ok) throw new Error(`Claim tree fetch failed: ${res.statusText}`);
+      return res.json();
+    },
+    enabled: !!ref,
+    refetchInterval: 15000,
+  });
+}
