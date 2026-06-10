@@ -32,7 +32,7 @@ deps: ## get the golang dependencies in the vendor folder
 	GO111MODULE=on  go mod vendor
 
 .PHONY: build-ui
-build-ui: ## Build the Angular frontend
+build-ui: ## Build the React frontend
 	cd $(MKFILE_PATH)/ui && npm ci && npm run build
 
 .PHONY: build-binary
@@ -45,13 +45,13 @@ build-binary: build-ui ##  build the unified binary with embedded frontend
 build-api: build-binary
 
 .PHONY: dev
-dev: ## Run in development mode (Angular dev server + Go API with CORS)
+dev: ## Run in development mode (React/Vite dev server + Go API with CORS)
 	@echo "Starting development mode..."
-	@echo "Frontend: http://localhost:4200"
+	@echo "Frontend: http://localhost:5173"
 	@echo "Backend API: http://localhost:8080"
 	@echo "Press Ctrl+C to stop both servers"
 	@trap 'kill 0' SIGINT; \
-	cd $(MKFILE_PATH)/ui && npm install && ng serve & \
+	cd $(MKFILE_PATH)/ui && npm install --legacy-peer-deps && npm run dev & \
 	go run -tags dev . & \
 	wait
 
