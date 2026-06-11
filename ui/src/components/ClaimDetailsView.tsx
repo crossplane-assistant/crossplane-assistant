@@ -40,6 +40,17 @@ export const ClaimDetailsView: React.FC = () => {
     }
   }, [encodedRef]);
 
+  // Escape key listener to close sliding details drawer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedNode(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Query Claim details
   const {
     isLoading: claimLoading,
@@ -159,7 +170,13 @@ export const ClaimDetailsView: React.FC = () => {
 
       {/* Sliding Detail Drawer */}
       {selectedNode && (
-        <div className="fixed inset-y-0 right-0 w-[650px] bg-white shadow-2xl border-l border-slate-200 flex flex-col z-50 animate-slideIn">
+        <>
+          {/* Backdrop overlay */}
+          <div
+            className="fixed inset-0 bg-slate-900/30 backdrop-blur-xs z-40 animate-fadeIn"
+            onClick={() => setSelectedNode(null)}
+          />
+          <div className="fixed inset-y-0 right-0 w-[650px] bg-white shadow-2xl border-l border-slate-200 flex flex-col z-50 animate-slideIn">
           {/* Header */}
           <div className="p-6 border-b border-slate-150 bg-slate-50 flex items-center justify-between flex-shrink-0">
             <div className="flex flex-col min-w-0">
@@ -243,6 +260,7 @@ export const ClaimDetailsView: React.FC = () => {
             </div>
           </Tabs.Root>
         </div>
+        </>
       )}
     </div>
   );

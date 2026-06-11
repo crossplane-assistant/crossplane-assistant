@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
 import MonacoEditor from '@monaco-editor/react';
 import { stringify } from 'yaml';
@@ -44,6 +44,17 @@ export function ResourceListView<T>({
   const [activeTab, setActiveTab] = useState<string>('view');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
+  // Escape key listener to close sliding details drawer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedItem(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleDelete = (item: T) => {
     const name = getRowName(item);
     if (confirm(`Are you sure you want to delete ${name}?`) && onDelete) {
@@ -68,9 +79,10 @@ export function ResourceListView<T>({
     );
   }
 
+  const safeData = data || [];
   const filteredData = filterFn
-    ? data.filter((item) => filterFn(item, searchTerm))
-    : data.filter((item) => {
+    ? safeData.filter((item) => filterFn(item, searchTerm))
+    : safeData.filter((item) => {
         const name = getRowName(item).toLowerCase();
         return name.includes(searchTerm.toLowerCase());
       });
@@ -162,7 +174,13 @@ export function ResourceListView<T>({
 
       {/* Sliding detail drawer */}
       {selectedItem && (
-        <div className="fixed inset-y-0 right-0 w-[650px] bg-white shadow-2xl border-l border-slate-200 flex flex-col z-50 animate-slideIn">
+        <>
+          {/* Backdrop overlay */}
+          <div
+            className="fixed inset-0 bg-slate-900/30 backdrop-blur-xs z-40 animate-fadeIn"
+            onClick={() => setSelectedItem(null)}
+          />
+          <div className="fixed inset-y-0 right-0 w-[650px] bg-white shadow-2xl border-l border-slate-200 flex flex-col z-50 animate-slideIn">
           {/* Header */}
           <div className="p-6 border-b border-slate-150 bg-slate-50 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -244,6 +262,7 @@ export function ResourceListView<T>({
             </div>
           </Tabs.Root>
         </div>
+        </>
       )}
     </div>
   );
