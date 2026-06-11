@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
 import MonacoEditor from '@monaco-editor/react';
 import { stringify } from 'yaml';
@@ -12,6 +12,17 @@ export const ListCompositions: React.FC = () => {
   const [selectedComposition, setSelectedComposition] = useState<any | null>(null);
   const [activeDetailTab, setActiveDetailTab] = useState<string>('view');
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+
+  // Escape key listener to close sliding details drawer
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedComposition(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleDelete = (name: string) => {
     if (confirm(`Are you sure you want to delete composition ${name}?`)) {
@@ -113,7 +124,13 @@ export const ListCompositions: React.FC = () => {
 
       {/* Slide-out Sliding Panel for Composition Detail */}
       {selectedComposition && (
-        <div className="fixed inset-y-0 right-0 w-[650px] bg-white shadow-2xl border-l border-slate-200 flex flex-col z-50 animate-slideIn">
+        <>
+          {/* Backdrop overlay */}
+          <div
+            className="fixed inset-0 bg-slate-900/30 backdrop-blur-xs z-40 animate-fadeIn"
+            onClick={() => setSelectedComposition(null)}
+          />
+          <div className="fixed inset-y-0 right-0 w-[650px] bg-white shadow-2xl border-l border-slate-200 flex flex-col z-50 animate-slideIn">
           {/* Panel Header */}
           <div className="p-6 border-b border-slate-150 bg-slate-50 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -189,6 +206,7 @@ export const ListCompositions: React.FC = () => {
             </div>
           </Tabs.Root>
         </div>
+        </>
       )}
 
       {/* Simple Mock Create Composition Modal */}

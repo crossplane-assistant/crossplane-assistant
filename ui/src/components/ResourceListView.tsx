@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import * as Tabs from '@radix-ui/react-tabs';
 import MonacoEditor from '@monaco-editor/react';
 import { stringify } from 'yaml';
 import { Search, Trash2, X, BookOpen } from 'lucide-react';
+import { ResourceRelations } from './ResourceRelations';
 
 export interface Column<T> {
   header: string;
@@ -43,6 +45,20 @@ export function ResourceListView<T>({
   const [selectedItem, setSelectedItem] = useState<T | null>(null);
   const [activeTab, setActiveTab] = useState<string>('view');
   const [searchTerm, setSearchTerm] = useState<string>('');
+
+  const [searchParams] = useSearchParams();
+  const queryName = searchParams.get('name');
+
+  // Auto-select drawer item if name parameter is provided in query string
+  useEffect(() => {
+    if (data && data.length > 0 && queryName && !selectedItem) {
+      const matched = data.find((item) => getRowName(item) === queryName);
+      if (matched) {
+        setSelectedItem(matched);
+        setActiveTab(renderDetailView ? 'view' : 'manifest');
+      }
+    }
+  }, [data, queryName, selectedItem, getRowName, renderDetailView]);
 
   // Escape key listener to close sliding details drawer
   useEffect(() => {
@@ -233,6 +249,12 @@ export function ResourceListView<T>({
               >
                 Event
               </Tabs.Trigger>
+              <Tabs.Trigger
+                value="relations"
+                className="py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 focus:outline-none cursor-pointer transition-colors"
+              >
+                Relations
+              </Tabs.Trigger>
             </Tabs.List>
 
             {/* Tabs content */}
@@ -258,6 +280,11 @@ export function ResourceListView<T>({
                 <div className="p-4 border border-slate-200 rounded-lg bg-slate-50 text-slate-400 italic text-center text-xs">
                   No recent events for this resource.
                 </div>
+              </Tabs.Content>
+
+              <Tabs.Content value="relations" className="animate-fadeIn">
+                <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Resource Relations</div>
+                <ResourceRelations resource={selectedItem} />
               </Tabs.Content>
             </div>
           </Tabs.Root>

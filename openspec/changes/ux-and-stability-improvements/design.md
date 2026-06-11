@@ -44,6 +44,14 @@ Clicking an MR link from an XR details panel will route to `/explore/managed-res
 ### 6. PNG Logo Asset Copying
 We will copy `docs/assets/crossplane-assistant.png` directly into `ui/src/assets/crossplane-assistant.png` during the build/execution phase and change `App.tsx` image sources to point to this new path.
 
+### 7. Correcting React Hook Sequences to Prevent Mismatch Crashes
+To eliminate the `Rendered fewer hooks than expected` exception, we must adhere strictly to the Rules of Hooks. In `ClaimDetailsView.tsx`, the `useSearchParams` hook and matching auto-select `useEffect` will be moved to the very top of the function body, ensuring they are executed *prior* to any early `return` checks for loading (`claimLoading || treeLoading`) or error states.
+
+### 8. Unifying Compositions Drawer Mechanics
+To bring `ListCompositions.tsx` up to par with the other list pages' UX, we will:
+- Inject a window-level keydown `useEffect` listener to dismiss the drawer when the user presses `Escape`.
+- Introduce a background backdrop overlay `<div className="fixed inset-0 bg-slate-900/30 backdrop-blur-xs z-40 ..."/>` with an `onClick` handler that resets `selectedComposition` to `null`.
+
 ## Risks / Trade-offs
 
 - **[Risk] High volume of MR kinds overloading drop-down selection** → *Mitigation*: Ensure the drop-down handles broad lists gracefully, utilizing search filters if available or alphabetical sorting.

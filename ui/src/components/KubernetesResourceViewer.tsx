@@ -11,13 +11,13 @@ interface ViewerProps {
 }
 
 export const KubernetesResourceViewer: React.FC<ViewerProps> = ({ context }) => {
-  const { resource } = context;
+  const { resource, defaultOpen } = context;
   const k8sManifest = resource?.base?.spec?.forProvider?.manifest;
   const yamlK8s = k8sManifest ? stringify(k8sManifest) : '';
   const yamlFull = resource ? stringify(resource) : '';
 
   return (
-    <ResourcePanel resourceType="kubernetes" resource={resource}>
+    <ResourcePanel resourceType="kubernetes" resource={resource} defaultOpen={defaultOpen}>
       <Tabs.Root defaultValue="kubernetes" className="flex flex-col w-full">
         <Tabs.List className="flex border-b border-slate-200 gap-4 mb-4">
           <Tabs.Trigger

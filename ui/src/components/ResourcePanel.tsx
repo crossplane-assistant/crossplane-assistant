@@ -6,10 +6,11 @@ interface ResourcePanelProps {
   resourceType: string;
   resource: any;
   children: React.ReactNode;
+  defaultOpen?: boolean;
 }
 
-export const ResourcePanel: React.FC<ResourcePanelProps> = ({ resourceType, resource, children }) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const ResourcePanel: React.FC<ResourcePanelProps> = ({ resourceType, resource, children, defaultOpen = false }) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <Collapsible.Root

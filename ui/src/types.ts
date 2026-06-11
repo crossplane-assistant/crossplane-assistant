@@ -20,6 +20,7 @@ export interface ResourceContext {
   resourceIndex: number;
   composition: any;
   graph: ResourcesGraph | undefined;
+  defaultOpen?: boolean;
 }
 
 export interface Item {

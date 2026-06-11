@@ -5,7 +5,6 @@ import (
 	xpv1 "github.com/crossplane/crossplane/apis/pkg/v1"
 	xpv1cli "github.com/ldassonville/crossplane-assistant/internal/crossplane/client/pkg/v1"
 
-	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/cache"
@@ -43,7 +42,7 @@ func (c *Registry) init() {
 	}
 
 	// https://pkg.go.dev/k8s.io/client-go/tools/watch#NewIndexerInformerWatcher
-	c.indexer, c.indexerCtrl, c.crdWatch, c.crdChan = watch.NewIndexerInformerWatcher(lw, &v1.CustomResourceDefinition{})
+	c.indexer, c.indexerCtrl, c.crdWatch, c.crdChan = watch.NewIndexerInformerWatcher(lw, &xpv1.ProviderRevision{})
 }
 
 func (c *Registry) ListActive() []*xpv1.ProviderRevision {

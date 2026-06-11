@@ -11,11 +11,11 @@ interface ViewerProps {
 }
 
 export const GenericResourceViewer: React.FC<ViewerProps> = ({ context }) => {
-  const { resource } = context;
+  const { resource, defaultOpen } = context;
   const yamlFull = resource ? stringify(resource) : '';
 
   return (
-    <ResourcePanel resourceType="generic" resource={resource}>
+    <ResourcePanel resourceType="generic" resource={resource} defaultOpen={defaultOpen}>
       <Tabs.Root defaultValue="manifest" className="flex flex-col w-full">
         <Tabs.List className="flex border-b border-slate-200 gap-4 mb-4">
           <Tabs.Trigger

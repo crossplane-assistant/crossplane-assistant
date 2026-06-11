@@ -44,7 +44,7 @@ const ExplorerLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
       {/* Sidebar */}
       <div className="w-64 bg-slate-900 text-slate-100 flex flex-col flex-shrink-0">
         <div className="p-6 border-b border-slate-800 flex items-center gap-3">
-          <img src="/src/assets/crossplane-assistant.svg" alt="logo" className="w-8 h-8" />
+          <img src="/src/assets/crossplane-assistant.png" alt="logo" className="w-8 h-8" />
           <span className="font-bold text-lg tracking-tight">Crossplane Assistant</span>
         </div>
         <div className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Explorer</div>
@@ -220,7 +220,7 @@ const DashboardLanding: React.FC = () => {
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-blue-950 rounded-3xl p-8 md:p-10 text-white shadow-xl relative overflow-hidden">
         {/* Subtle geometric pattern */}
         <div className="absolute right-0 bottom-0 opacity-10 transform translate-x-10 translate-y-10 pointer-events-none select-none">
-          <img src="/src/assets/crossplane-assistant.svg" alt="logo" className="w-96 h-90" />
+          <img src="/src/assets/crossplane-assistant.png" alt="logo" className="w-96 h-90" />
         </div>
         
         <div className="relative z-10 max-w-3xl space-y-4">

@@ -11,7 +11,8 @@ export function useEvents(ref: Ref | undefined) {
       if (!res.ok) {
         throw new Error(`Events fetch failed: ${res.statusText}`);
       }
-      return res.json();
+      const data = await res.json();
+      return data?.items || [];
     },
     enabled: !!ref,
     refetchInterval: 10000, // background-refresh events every 10 seconds

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import * as Tabs from '@radix-ui/react-tabs';
 import MonacoEditor from '@monaco-editor/react';
 import { stringify } from 'yaml';
@@ -9,7 +9,8 @@ import { useCompositionRevision } from '../queries/useCompositionQueries';
 import { useEvents } from '../queries/useEventQueries';
 import { ClaimGraph } from './ClaimGraph';
 import { ClaimEventsList } from './ClaimEventsList';
-import { X, Library, FileText, LayoutTemplate, Activity, ChevronRight } from 'lucide-react';
+import { ResourceRelations } from './ResourceRelations';
+import { X, Library, FileText, LayoutTemplate, Activity, ChevronRight, Link2 } from 'lucide-react';
 
 function cleanManifest(manifest: any): any {
   if (!manifest) return {};
@@ -93,6 +94,45 @@ export const ClaimDetailsView: React.FC = () => {
     refetchTree();
   };
 
+  const handleSelectNode = (node: ClaimTreeNode, template?: any) => {
+    setSelectedNode(node);
+    setSelectedNodeTemplate(template);
+    // If we click a node that has no template, force fallback tab to 'manifest'
+    if (activeTab === 'template' && !template) {
+      setActiveTab('manifest');
+    }
+  };
+
+  const [searchParams] = useSearchParams();
+  const queryActiveName = searchParams.get('activeName');
+
+  // Auto-select node from activeName query parameter
+  useEffect(() => {
+    if (tree?.root && queryActiveName && !selectedNode) {
+      const findNode = (node: ClaimTreeNode): ClaimTreeNode | null => {
+        if (node.name === queryActiveName || node.manifest?.metadata?.name === queryActiveName) {
+          return node;
+        }
+        if (node.children) {
+          for (const child of node.children) {
+            const res = findNode(child);
+            if (res) return res;
+          }
+        }
+        return null;
+      };
+      const matchedNode = findNode(tree.root);
+      if (matchedNode) {
+        handleSelectNode(
+          matchedNode,
+          compositionRevision?.spec?.resources && matchedNode.index !== undefined && matchedNode.index !== null
+            ? compositionRevision.spec.resources[matchedNode.index]
+            : undefined
+        );
+      }
+    }
+  }, [tree, queryActiveName, selectedNode, compositionRevision]);
+
   const lastRefreshDate = new Date(Math.max(claimUpdatedAt, treeUpdatedAt) || Date.now());
 
   if (claimLoading || treeLoading) {
@@ -118,17 +158,8 @@ export const ClaimDetailsView: React.FC = () => {
 
   const claimName = ref?.name || 'Claim Details';
 
-  const handleSelectNode = (node: ClaimTreeNode, template?: any) => {
-    setSelectedNode(node);
-    setSelectedNodeTemplate(template);
-    // If we click a node that has no template, force fallback tab to 'manifest'
-    if (activeTab === 'template' && !template) {
-      setActiveTab('manifest');
-    }
-  };
-
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-20 relative">
+    <div className="space-y-6 max-w-full px-4 sm:px-6 lg:px-8 pb-20 relative">
       {/* Breadcrumb Navigation */}
       <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
         <Link to="/explore/claims" className="hover:text-blue-600 transition-colors flex items-center gap-1.5">
@@ -224,6 +255,12 @@ export const ClaimDetailsView: React.FC = () => {
               >
                 <Activity className="w-4 h-4" /> Events
               </Tabs.Trigger>
+              <Tabs.Trigger
+                value="relations"
+                className="py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 flex items-center gap-1.5 focus:outline-none cursor-pointer transition-colors"
+              >
+                <Link2 className="w-4 h-4" /> Relations
+              </Tabs.Trigger>
             </Tabs.List>
 
             {/* Tab Content Panel Container */}
@@ -256,6 +293,12 @@ export const ClaimDetailsView: React.FC = () => {
               <Tabs.Content value="event" className="animate-fadeIn">
                 <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Resource Events</div>
                 <ClaimEventsList events={events} isLoading={eventsLoading} />
+              </Tabs.Content>
+
+              {/* Relations Tab */}
+              <Tabs.Content value="relations" className="animate-fadeIn">
+                <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Resource Relations</div>
+                <ResourceRelations resource={selectedNode.manifest || {}} />
               </Tabs.Content>
             </div>
           </Tabs.Root>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   useManagedResourceKinds,
   useManagedResources,
@@ -14,11 +15,28 @@ export const ListManagedResources: React.FC = () => {
   const { data: resources = [], isLoading: resourcesLoading, error: resourcesError } = useManagedResources(selectedKind);
   const deleteMutation = useDeleteManagedResource();
 
+  const [searchParams] = useSearchParams();
+  const queryGroup = searchParams.get('group');
+  const queryKind = searchParams.get('kind');
+
   useEffect(() => {
-    if (kinds.length > 0 && !selectedKind) {
-      setSelectedKind(kinds[0]);
+    if (kinds.length > 0) {
+      if (queryKind) {
+        const matched = kinds.find(
+          (k) =>
+            k.kind.toLowerCase() === queryKind.toLowerCase() &&
+            (!queryGroup || k.group.toLowerCase() === queryGroup.toLowerCase())
+        );
+        if (matched) {
+          setSelectedKind(matched);
+          return;
+        }
+      }
+      if (!selectedKind) {
+        setSelectedKind(kinds[0]);
+      }
     }
-  }, [kinds, selectedKind]);
+  }, [kinds, selectedKind, queryKind, queryGroup]);
 
   const getConditions = (mr: any) => mr.status?.conditions || [];
   const getStatus = (mr: any, type: string) => {

@@ -70,17 +70,17 @@ export const ClaimGraphNode: React.FC<ClaimGraphNodeProps> = ({
 
       <div className={`${isRoot ? 'flex root' : 'flex'} items-stretch gap-0`}>
         {/* Node Job Area */}
-        <div className="flex items-center flex-shrink-0" style={{ minWidth: '370px' }}>
+        <div className="flex items-center flex-shrink-0" style={{ minWidth: '400px' }}>
           <div
             onClick={() => onSelectNode(node, resourceTemplate)}
-            className={`cursor-pointer rounded-xl p-3 my-2.5 w-[360px] h-20 shadow-sm bg-white border transition-all flex flex-col justify-between relative group ${
+            className={`cursor-pointer rounded-xl py-2.5 px-3.5 my-2.5 w-[390px] min-h-[90px] shadow-sm bg-white border transition-all flex flex-col justify-between relative group ${
               isActive
                 ? 'ring-2 ring-blue-500 border-blue-500 shadow-md'
                 : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
             } ${!node.manifest ? 'border-dashed border-slate-300 bg-slate-50/50' : ''}`}
           >
             {/* Top row: Logo + Kind + Name + Badges */}
-            <div className="flex items-start gap-3 w-full h-[52px] overflow-hidden">
+            <div className="flex items-start gap-3 w-full flex-1">
               <div className="flex-shrink-0">
                 <ClaimNodeLogo
                   apiVersion={manifest?.apiVersion || node.version}
