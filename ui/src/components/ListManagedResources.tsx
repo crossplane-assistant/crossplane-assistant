@@ -8,6 +8,17 @@ import {
 import { ResourceListView } from './ResourceListView';
 import { ManagedResourceKind } from '../types';
 
+const MR_TEMPLATE = `apiVersion: s3.aws.upbound.io/v1beta1
+kind: Bucket
+metadata:
+  name: my-app-static-bucket
+spec:
+  forProvider:
+    region: us-east-1
+  providerConfigRef:
+    name: default
+`;
+
 export const ListManagedResources: React.FC = () => {
   const { data: kinds = [], isLoading: kindsLoading, error: kindsError } = useManagedResourceKinds();
   const [selectedKind, setSelectedKind] = useState<ManagedResourceKind | undefined>(undefined);
@@ -116,6 +127,8 @@ export const ListManagedResources: React.FC = () => {
         }
       }}
       headerRightArea={dropdownArea}
+      createModalTemplate={MR_TEMPLATE}
+      createModalTitle={selectedKind ? `Create ${selectedKind.kind}` : 'Create Managed Resource'}
     />
   );
 };

@@ -2,6 +2,14 @@ import React from 'react';
 import { useProviders, useDeleteProvider } from '../queries/useProviderQueries';
 import { ResourceListView } from './ResourceListView';
 
+const PROVIDER_TEMPLATE = `apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-aws-s3
+spec:
+  package: xpkg.upbound.io/crossplane/provider-aws-s3:v1.0.0
+`;
+
 export const ListProviders: React.FC = () => {
   const { data: providers = [], isLoading, error } = useProviders();
   const deleteMutation = useDeleteProvider();
@@ -56,6 +64,7 @@ export const ListProviders: React.FC = () => {
       onDelete={async (p) => {
         await deleteMutation.mutateAsync(p.metadata?.name);
       }}
+      createModalTemplate={PROVIDER_TEMPLATE}
     />
   );
 };

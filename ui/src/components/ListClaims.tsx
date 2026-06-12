@@ -5,6 +5,16 @@ import { useClaims, useDeleteClaim } from '../queries/useClaimQueries';
 import { ResourceListView } from './ResourceListView';
 import { Ref, encodeRef } from '../types';
 
+const CLAIM_TEMPLATE = `apiVersion: database.example.org/v1alpha1
+kind: PostgreSQLInstance
+metadata:
+  name: my-postgresql-claim
+  namespace: default
+spec:
+  parameters:
+    storageGB: 20
+`;
+
 export const ListClaims: React.FC = () => {
   const { data: claims = [], isLoading, error } = useClaims();
   const deleteMutation = useDeleteClaim();
@@ -86,6 +96,7 @@ export const ListClaims: React.FC = () => {
       onDelete={async (c) => {
         await deleteMutation.mutateAsync(getRowRef(c));
       }}
+      createModalTemplate={CLAIM_TEMPLATE}
     />
   );
 };

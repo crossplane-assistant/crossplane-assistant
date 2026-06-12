@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import * as Tabs from '@radix-ui/react-tabs';
 import MonacoEditor from '@monaco-editor/react';
 import { stringify } from 'yaml';
-import { Search, Trash2, X, BookOpen } from 'lucide-react';
+import { Search, Trash2, X, BookOpen, Plus, Layers } from 'lucide-react';
 import { ResourceRelations } from './ResourceRelations';
 
 export interface Column<T> {
@@ -25,6 +25,9 @@ interface ResourceListViewProps<T> {
   renderDetailView?: (item: T) => React.ReactNode;
   filterFn?: (item: T, searchTerm: string) => boolean;
   headerRightArea?: React.ReactNode; // Optional dropdown/selectors in table header
+  createModalTemplate?: string;       // Default YAML template content
+  createModalTitle?: string;          // Modal header text (e.g. "Create PostgreSQL Claim")
+  onCreateSuccess?: (yaml: string) => void; // Success callback
 }
 
 export function ResourceListView<T>({
@@ -41,13 +44,25 @@ export function ResourceListView<T>({
   renderDetailView,
   filterFn,
   headerRightArea,
+  createModalTemplate,
+  createModalTitle,
+  onCreateSuccess,
 }: ResourceListViewProps<T>) {
   const [selectedItem, setSelectedItem] = useState<T | null>(null);
   const [activeTab, setActiveTab] = useState<string>('view');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
+  const [createYamlValue, setCreateYamlValue] = useState<string>('');
 
   const [searchParams] = useSearchParams();
   const queryName = searchParams.get('name');
+
+  // Initialize YAML template when modal is requested or when template changes
+  useEffect(() => {
+    if (createModalTemplate) {
+      setCreateYamlValue(createModalTemplate);
+    }
+  }, [createModalTemplate, showCreateModal]);
 
   // Auto-select drawer item if name parameter is provided in query string
   useEffect(() => {
@@ -60,11 +75,12 @@ export function ResourceListView<T>({
     }
   }, [data, queryName, selectedItem, getRowName, renderDetailView]);
 
-  // Escape key listener to close sliding details drawer
+  // Escape key listener to close sliding details drawer and the creation modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSelectedItem(null);
+        setShowCreateModal(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -125,7 +141,14 @@ export function ResourceListView<T>({
             )}
           </p>
         </div>
-        {createButton}
+        {createButton || (createModalTemplate && (
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-2.5 rounded-lg shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+          >
+            <Plus className="w-4.5 h-4.5" /> {createModalTitle || `Create ${title.replace(/s$/, '')}`}
+          </button>
+        ))}
       </div>
 
       {/* Filter and Table container */}
@@ -290,6 +313,61 @@ export function ResourceListView<T>({
           </Tabs.Root>
         </div>
         </>
+      )}
+
+      {/* Creation Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fadeIn p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-xl p-6 border border-slate-100 relative">
+            <div className="flex justify-between items-center border-b border-slate-150 pb-4 mb-4">
+              <h3 className="font-extrabold text-slate-800 text-lg flex items-center gap-2">
+                <Layers className="w-5 h-5 text-blue-500" /> {createModalTitle || `Create New ${title.replace(/s$/, '')}`}
+              </h3>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-lg transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <p className="text-xs text-slate-500">
+                You can specify raw Kubernetes/Crossplane JSON or YAML definition below to create a {title.replace(/s$/, '')}.
+              </p>
+              <div className="h-[250px] border border-slate-200 rounded-lg overflow-hidden shadow-inner">
+                <MonacoEditor
+                  height="100%"
+                  language="yaml"
+                  theme="vs-light"
+                  value={createYamlValue}
+                  onChange={(val) => setCreateYamlValue(val || '')}
+                  options={{ minimap: { enabled: false } }}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-150">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 text-sm font-medium cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (onCreateSuccess) {
+                    onCreateSuccess(createYamlValue);
+                  } else {
+                    alert(`Created ${title.replace(/s$/, '')} successfully (Mocked)!`);
+                  }
+                  setShowCreateModal(false);
+                }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm cursor-pointer transition-colors"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

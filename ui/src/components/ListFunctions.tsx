@@ -2,6 +2,14 @@ import React from 'react';
 import { useFunctions, useDeleteFunction } from '../queries/useFunctionQueries';
 import { ResourceListView } from './ResourceListView';
 
+const FUNCTION_TEMPLATE = `apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-patch-and-transform
+spec:
+  package: xpkg.upbound.io/crossplane/function-patch-and-transform:v0.2.0
+`;
+
 export const ListFunctions: React.FC = () => {
   const { data: functions = [], isLoading, error } = useFunctions();
   const deleteMutation = useDeleteFunction();
@@ -56,6 +64,7 @@ export const ListFunctions: React.FC = () => {
       onDelete={async (f) => {
         await deleteMutation.mutateAsync(f.metadata?.name);
       }}
+      createModalTemplate={FUNCTION_TEMPLATE}
     />
   );
 };

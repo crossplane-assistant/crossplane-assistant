@@ -3,9 +3,9 @@
 This capability defines the standardized explorer list component, dynamic managed resource exploration, and resource deletion actions for porting the remaining views from Angular to React in the Crossplane Assistant user interface.
 ## Requirements
 ### Requirement: Standardized Explorer List Component
-The system SHALL provide a reusable `<ResourceListView>` component that renders search filters, a details slider, and interactive status markers. The sliding details drawer SHALL support dismissal via close buttons, clicking on a semi-transparent backdrop overlay, or pressing the keyboard Escape key. The component SHALL safely handle null or undefined data arrays, displaying an empty table row without crashing the React application.
+All explorer lists, including Compositions, SHALL utilize the shared `<ResourceListView>` component to render search filters, page headers, a details drawer, and interactive status markers. The sliding details drawer SHALL support dismissal via close buttons, clicking on a semi-transparent backdrop overlay, or pressing the keyboard Escape key. The component SHALL safely handle null or undefined data arrays, displaying an empty table row without crashing the React application.
 
-#### Scenario: Launching Detail Drawer
+#### Scenario: Launching detail drawer
 - **WHEN** the user clicks on any row in the explorer list
 - **THEN** a sliding panel displays with a backdrop overlay, showing the View, Manifest, and Event tabs.
 
