@@ -20,6 +20,7 @@ import (
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/managedresource"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/provider"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/providerrevision"
+	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/telemetry"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/unstruct"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/xrd"
 	"github.com/ldassonville/crossplane-assistant/internal/kube/resource"
@@ -91,6 +92,10 @@ func (a *ApiServer) Start(staticFS fs.FS) error {
 	eventServices := event.NewService(k8sClient)
 	eventHandler := event.NewHandler(eventServices)
 	a.e.Handle("GET", "/events/:ref", eventHandler.GetResourcesEvents)
+
+	telemetryService := telemetry.NewService(resourceResolver)
+	telemetryHandler := telemetry.NewHandler(telemetryService)
+	a.e.Handle("GET", "/api/v1/telemetry/average", telemetryHandler.GetAverageReadyDuration)
 
 	claimService := claim.NewClaimService(xrdClient, crdClient, crdRegistry, discoveryClient, dynamicClient, xK8sClient, resourceResolver)
 	claimHandler := claim.NewHandler(claimService)

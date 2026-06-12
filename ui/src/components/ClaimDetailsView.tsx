@@ -8,9 +8,10 @@ import { useClaim, useClaimTree } from '../queries/useClaimQueries';
 import { useCompositionRevision } from '../queries/useCompositionQueries';
 import { useEvents } from '../queries/useEventQueries';
 import { ClaimGraph } from './ClaimGraph';
+import { ClaimGanttTimeline } from './ClaimGanttTimeline';
 import { ClaimEventsList } from './ClaimEventsList';
 import { ResourceRelations } from './ResourceRelations';
-import { X, Library, FileText, LayoutTemplate, Activity, ChevronRight, Link2 } from 'lucide-react';
+import { X, Library, FileText, LayoutTemplate, Activity, ChevronRight, Link2, Network, Clock } from 'lucide-react';
 
 function cleanManifest(manifest: any): any {
   if (!manifest) return {};
@@ -29,6 +30,7 @@ export const ClaimDetailsView: React.FC = () => {
   const [selectedNode, setSelectedNode] = useState<ClaimTreeNode | null>(null);
   const [selectedNodeTemplate, setSelectedNodeTemplate] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<string>('manifest');
+  const [viewMode, setViewMode] = useState<'graph' | 'timeline'>('graph');
 
   // Decode the reference parameter
   useEffect(() => {
@@ -182,17 +184,45 @@ export const ClaimDetailsView: React.FC = () => {
         </div>
       </div>
 
+      {/* View Switcher Tabs */}
+      <div className="flex border-b border-slate-200">
+        <button
+          onClick={() => setViewMode('graph')}
+          className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+            viewMode === 'graph'
+              ? 'border-blue-500 text-blue-600 font-extrabold bg-blue-50/10'
+              : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'
+          }`}
+        >
+          <Network className="w-4 h-4" /> Graph View
+        </button>
+        <button
+          onClick={() => setViewMode('timeline')}
+          className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+            viewMode === 'timeline'
+              ? 'border-blue-500 text-blue-600 font-extrabold bg-blue-50/10'
+              : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'
+          }`}
+        >
+          <Clock className="w-4 h-4" /> Timeline View
+        </button>
+      </div>
+
       {/* Tree Visualization */}
       {tree?.root ? (
-        <ClaimGraph
-          root={tree.root}
-          activeNodeId={selectedNode?.uid}
-          onSelectNode={handleSelectNode}
-          compositionRevision={compositionRevision}
-          lastRefresh={lastRefreshDate}
-          onRefresh={handleRefresh}
-          reloadInSeconds={15}
-        />
+        viewMode === 'graph' ? (
+          <ClaimGraph
+            root={tree.root}
+            activeNodeId={selectedNode?.uid}
+            onSelectNode={handleSelectNode}
+            compositionRevision={compositionRevision}
+            lastRefresh={lastRefreshDate}
+            onRefresh={handleRefresh}
+            reloadInSeconds={15}
+          />
+        ) : (
+          <ClaimGanttTimeline root={tree.root} />
+        )
       ) : (
         <div className="p-8 text-center text-slate-400 italic bg-white border border-slate-200 rounded-xl shadow-sm">
           No dependency graph was resolved for this Claim.

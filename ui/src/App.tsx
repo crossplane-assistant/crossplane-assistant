@@ -45,7 +45,7 @@ const ExplorerLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
       <div className="w-64 bg-slate-900 text-slate-100 flex flex-col flex-shrink-0">
         <a href="/">
           <div className="p-6 border-b border-slate-800 items-center gap-3 text-center">
-            <img src="/src/assets/crossplane-assistant-logo-colors.png" alt="logo" className="w-15 h-15" />
+            <img src="/src/assets/crossplane-assistant-logo-colors.png" alt="logo" className="w-40 h-40" />
             <span className="font-bold text-lg tracking-tight">Crossplane Assistant</span>
           </div>
         </a>

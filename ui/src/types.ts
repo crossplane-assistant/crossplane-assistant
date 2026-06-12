@@ -116,3 +116,11 @@ export interface ManagedResourceKind {
   kind: string;
   resource: string;
 }
+
+export interface TelemetryAverageResponse {
+  apiVersion: string;
+  kind: string;
+  averageSeconds: number;
+  sampleSize: number;
+}
+
