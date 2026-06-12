@@ -18,3 +18,4 @@
 - [x] 3.1 Integrate the `<SchemaBrowser />` component as a new "API Ref" tab inside the details sliding panel in `ui/src/components/ResourceListView.tsx`.
 - [x] 3.2 Verify layout, styling, and correct scroll-container behavior inside the slide-over drawer when displaying large schema trees.
 - [x] 3.3 Verify that both native, installed custom resources, and uninstalled external resources correctly resolve and display their respective schemas.
+- [x] 3.4 Implement Flexbox vertical dynamic stretching (`h-[calc(100vh-200px)]`) for `<SchemaBrowser />` and `<Tabs.Content>` to optimize viewport utilization.

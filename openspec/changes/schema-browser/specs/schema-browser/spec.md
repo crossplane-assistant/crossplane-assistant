@@ -34,3 +34,10 @@ The `<SchemaBrowser />` component SHALL render each property in the JSON schema 
 #### Scenario: Expand collapsible object node
 - **WHEN** the user clicks the expand chevron on an object property node (such as `spec` or `forProvider`)
 - **THEN** the UI expands the node to recursively display all child properties with clear hierarchy indentation and type annotations.
+
+### Requirement: Viewport Height Alignment
+The `<SchemaBrowser />` component and its property tree Card SHALL dynamically stretch to occupy the entire remaining vertical space of the details sliding side panel, with a minimum default height of `300px` and an independent inner scrollbar, ensuring fixed headers remain visible.
+
+#### Scenario: Adjust height dynamically to viewport
+- **WHEN** the "API Ref" tab is active in the sliding panel
+- **THEN** the schema property tree stretches to fit the remaining vertical space of the viewport, and scrolling is restricted to the tree card itself.

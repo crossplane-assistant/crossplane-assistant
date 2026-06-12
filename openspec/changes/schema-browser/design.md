@@ -29,6 +29,10 @@ For native resources (e.g. `Secret`, `ConfigMap`), we will query the cluster's `
 When a Custom Resource's schema is resolved externally via `doc.crds.dev` (because the CRD is not installed in the cluster), we will cache the result in a local directory (e.g. `.cache/schemas/`).
 - **Rationale:** Ensures that once a schema has been downloaded once, the developer can work completely offline, and we avoid triggering external API rate-limiting.
 
+### Decision 4: Flexbox-Based Vertical Viewport Stretching
+We will configure the "API Ref" tab container to use a vertical flexbox layout stretching to the viewport height (`h-[calc(100vh-200px)]`), with an independent inner scroll-container on the Properties Tree.
+- **Rationale:** Standardizes the display for large schema hierarchies (e.g. Upbound AWS resources) by keeping coordinate headers and overview text fixed at the top, while maximizing vertical viewport utilization for tree scrolling on both desktop and mobile screens.
+
 ## Risks / Trade-offs
 
 - **[Risk] External Network Failure for Uninstalled Providers:** If a developer is working offline and references a provider CRD that isn't installed locally, the external fallback will fail.

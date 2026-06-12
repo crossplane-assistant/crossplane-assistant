@@ -317,8 +317,8 @@ export function ResourceListView<T>({
                 <ResourceRelations resource={selectedItem} />
               </Tabs.Content>
 
-              <Tabs.Content value="schema" className="animate-fadeIn">
-                <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2 font-mono">JSON Schema Reference</div>
+              <Tabs.Content value="schema" className="animate-fadeIn h-[calc(100vh-180px)] flex flex-col overflow-hidden">
+                <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2 font-mono flex-none">JSON Schema Reference</div>
                 <SchemaBrowser
                   apiVersion={(selectedItem as any).apiVersion || (selectedItem as any).base?.apiVersion}
                   kind={(selectedItem as any).kind || (selectedItem as any).base?.kind}

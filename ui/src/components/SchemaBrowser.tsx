@@ -68,9 +68,9 @@ export const SchemaBrowser: React.FC<SchemaBrowserProps> = ({ apiVersion, kind }
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 flex-1 flex flex-col min-h-0 overflow-hidden">
       {/* Schema Header Metadata Banner */}
-      <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-wrap items-center justify-between gap-3 text-[11px] shadow-xs select-none">
+      <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-wrap items-center justify-between gap-3 text-[11px] shadow-xs select-none flex-none">
         <div className="flex items-center gap-2">
           <Layers className="w-4 h-4 text-blue-500" />
           <span className="font-extrabold text-slate-700 uppercase tracking-wider text-[10px]">API Coordinates</span>
@@ -90,19 +90,19 @@ export const SchemaBrowser: React.FC<SchemaBrowserProps> = ({ apiVersion, kind }
 
       {/* Top Level Schema Description */}
       {description && (
-        <div className="text-xs text-slate-600 bg-blue-50/20 border-l-2 border-blue-500 p-3 rounded-r-lg leading-relaxed text-justify">
+        <div className="text-xs text-slate-600 bg-blue-50/20 border-l-2 border-blue-500 p-3 rounded-r-lg leading-relaxed text-justify flex-none">
           <p className="font-semibold text-slate-800 mb-0.5 select-none">Resource Overview:</p>
           {description}
         </div>
       )}
 
       {/* Interactive Tree Section */}
-      <div className="border border-slate-150 rounded-xl bg-white p-4 shadow-xs space-y-2.5 overflow-hidden">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2 select-none">
+      <div className="border border-slate-150 rounded-xl bg-white p-4 shadow-xs space-y-2.5 overflow-hidden flex-1 flex flex-col min-h-[250px]">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2 select-none flex-none">
           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Properties Tree</span>
           <span className="text-[10px] text-slate-400">Click folders to expand</span>
         </div>
-        <div className="space-y-1.5 max-h-[500px] overflow-y-auto pr-1">
+        <div className="space-y-1.5 flex-1 overflow-y-auto pr-1">
           {Object.entries(properties).map(([name, propSchema]: [string, any]) => (
             <SchemaNode
               key={name}
