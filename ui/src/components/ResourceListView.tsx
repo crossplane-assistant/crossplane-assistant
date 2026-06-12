@@ -5,6 +5,7 @@ import MonacoEditor from '@monaco-editor/react';
 import { stringify } from 'yaml';
 import { Search, Trash2, X, BookOpen, Plus, Layers } from 'lucide-react';
 import { ResourceRelations } from './ResourceRelations';
+import { SchemaBrowser } from './SchemaBrowser';
 
 export interface Column<T> {
   header: string;
@@ -278,6 +279,12 @@ export function ResourceListView<T>({
               >
                 Relations
               </Tabs.Trigger>
+              <Tabs.Trigger
+                value="schema"
+                className="py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 focus:outline-none cursor-pointer transition-colors"
+              >
+                API Ref
+              </Tabs.Trigger>
             </Tabs.List>
 
             {/* Tabs content */}
@@ -308,6 +315,14 @@ export function ResourceListView<T>({
               <Tabs.Content value="relations" className="animate-fadeIn">
                 <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Resource Relations</div>
                 <ResourceRelations resource={selectedItem} />
+              </Tabs.Content>
+
+              <Tabs.Content value="schema" className="animate-fadeIn">
+                <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2 font-mono">JSON Schema Reference</div>
+                <SchemaBrowser
+                  apiVersion={(selectedItem as any).apiVersion || (selectedItem as any).base?.apiVersion}
+                  kind={(selectedItem as any).kind || (selectedItem as any).base?.kind}
+                />
               </Tabs.Content>
             </div>
           </Tabs.Root>
