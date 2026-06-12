@@ -123,6 +123,11 @@ export const EcosystemCatalog: React.FC<EcosystemCatalogProps> = ({ category, on
                     <Sparkles className="w-3 h-3 text-green-500 fill-current" /> Curated Preset
                   </span>
                 )}
+                {item.isArchived && (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                    ⚠️ Archived
+                  </span>
+                )}
                 <span className="text-xs text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
                   {item.defaultVersion}
                 </span>
@@ -146,9 +151,13 @@ export const EcosystemCatalog: React.FC<EcosystemCatalogProps> = ({ category, on
               </a>
               <button
                 onClick={() => onInstall(item)}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer shadow-xs"
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 font-semibold text-xs rounded-lg transition-colors cursor-pointer shadow-xs ${
+                  item.isArchived
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               >
-                <Download className="w-3.5 h-3.5" /> {item.isCommunity ? 'Auto-Config' : 'Use Preset'}
+                <Download className="w-3.5 h-3.5" /> {item.isArchived ? 'Legacy Preset' : (item.isCommunity ? 'Auto-Config' : 'Use Preset')}
               </button>
             </div>
           </div>

@@ -62,13 +62,6 @@ export function ResourceListView<T>({
   const [searchParams] = useSearchParams();
   const queryName = searchParams.get('name');
 
-  // Initialize YAML template when modal is requested or when template changes
-  useEffect(() => {
-    if (createModalTemplate) {
-      setCreateYamlValue(createModalTemplate);
-    }
-  }, [createModalTemplate, showCreateModal]);
-
   // Auto-select drawer item if name parameter is provided in query string
   useEffect(() => {
     if (data && data.length > 0 && queryName && !selectedItem) {
@@ -148,7 +141,12 @@ export function ResourceListView<T>({
         </div>
         {createButton || (createModalTemplate && (
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => {
+              if (createModalTemplate) {
+                setCreateYamlValue(createModalTemplate);
+              }
+              setShowCreateModal(true);
+            }}
             className="bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-2.5 rounded-lg shadow-sm flex items-center gap-2 transition-all cursor-pointer"
           >
             <Plus className="w-4.5 h-4.5" /> {createModalTitle || `Create ${title.replace(/s$/, '')}`}

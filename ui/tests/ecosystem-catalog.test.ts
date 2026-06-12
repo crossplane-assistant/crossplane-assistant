@@ -50,4 +50,58 @@ describe('Ecosystem Catalog Utilities', () => {
     expect(gcpGcs?.category).toBe('provider');
     expect(gcpGcs?.yamlTemplate).toContain('kind: Provider');
   });
+
+  test('mergeEcosystemData filters out archived or deprecated community repositories', () => {
+    const mockGithub = [
+      {
+        name: 'function-cue-archived', // archived suffix name
+        stargazers_count: 12,
+        archived: true,
+      },
+      {
+        name: 'function-deprecated-engine', // deprecated name
+        stargazers_count: 5,
+        description: 'No longer maintained',
+      },
+      {
+        name: 'provider-dead-community',
+        stargazers_count: 3,
+        description: 'DEPRECATED: Use provider-helm instead' // deprecated description
+      },
+      {
+        name: 'function-active-community', // active community
+        stargazers_count: 45,
+        archived: false,
+        description: 'Active CUE interpreter'
+      }
+    ];
+
+    const result = mergeEcosystemData(CURATED_PRESETS, mockGithub);
+
+    // Filtered items should NOT be present
+    expect(result.find(item => item.id === 'function-cue-archived')).toBeUndefined();
+    expect(result.find(item => item.id === 'function-deprecated-engine')).toBeUndefined();
+    expect(result.find(item => item.id === 'provider-dead-community')).toBeUndefined();
+
+    // Active community item SHOULD be present
+    expect(result.find(item => item.id === 'function-active-community')).toBeDefined();
+  });
+
+  test('mergeEcosystemData badges archived curated items rather than hiding them', () => {
+    const mockGithub = [
+      {
+        name: 'function-go-templating', // Curated item, archived on github
+        stargazers_count: 220,
+        archived: true,
+      }
+    ];
+
+    const result = mergeEcosystemData(CURATED_PRESETS, mockGithub);
+    const goTemplating = result.find(item => item.id === 'function-go-templating');
+
+    // Should still be present because it is curated
+    expect(goTemplating).toBeDefined();
+    // But should be flagged as archived
+    expect(goTemplating?.isArchived).toBe(true);
+  });
 });

@@ -23,7 +23,12 @@
 
 ## 5. Deprecation & Archival Filtering
 
-- [ ] 5.1 Implement `isDeprecatedOrArchived` utility logic and apply it to filter out community items from the raw GitHub API response.
-- [ ] 5.2 Add `isArchived` support to local presets and display a prominent warning badge (`⚠️ Archived`) on the UI card when detected.
-- [ ] 5.3 Write/update unit tests in `ui/tests/ecosystem-catalog.test.ts` to assert that archived community items are filtered out, and archived curated items are badged.
-- [ ] 5.4 Run compile checks and manually verify that a community item like `function-cue-archived` is hidden successfully.
+- [x] 5.1 Implement `isDeprecatedOrArchived` utility logic and apply it to filter out community items from the raw GitHub API response.
+- [x] 5.2 Add `isArchived` support to local presets and display a prominent warning badge (`⚠️ Archived`) on the UI card when detected.
+- [x] 5.3 Write/update unit tests in `ui/tests/ecosystem-catalog.test.ts` to assert that archived community items are filtered out, and archived curated items are badged.
+- [x] 5.4 Run compile checks and manually verify that a community item like `function-cue-archived` is hidden successfully.
+
+## 6. Fix Preset Overwrite Bug
+
+- [x] 6.1 Fix state race condition in `ResourceListView.tsx` by removing the `useEffect` trigger and initializing YAML template state directly on user click actions (+ Create and Use Preset).
+- [x] 6.2 Verify build compilation and check that the Monaco Editor displays the precise template of the clicked card.

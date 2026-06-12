@@ -9,6 +9,7 @@ export interface EcosystemItem {
   yamlTemplate: string;
   stars?: number;
   isCommunity?: boolean;
+  isArchived?: boolean;
 }
 
 export const CURATED_PRESETS: EcosystemItem[] = [
@@ -219,6 +220,30 @@ spec:
 `;
 }
 
+export function isDeprecatedOrArchived(repo: any): boolean {
+  if (repo.archived || repo.disabled) {
+    return true;
+  }
+
+  const nameLower = repo.name.toLowerCase();
+  if (nameLower.endsWith('-archived') || nameLower.includes('-deprecated')) {
+    return true;
+  }
+
+  if (repo.description) {
+    const descLower = repo.description.toLowerCase();
+    if (
+      descLower.includes('deprecated') ||
+      descLower.includes('no longer maintained') ||
+      descLower.includes('superseded by')
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function mergeEcosystemData(
   localPresets: EcosystemItem[],
   gitHubRepos: any[]
@@ -241,6 +266,7 @@ export function mergeEcosystemData(
         stars: matchedRepo.stargazers_count,
         shortDesc: preset.shortDesc || matchedRepo.description,
         isCommunity: false,
+        isArchived: preset.isArchived || isDeprecatedOrArchived(matchedRepo),
       });
     } else {
       mergedList.push({ ...preset, isCommunity: false });
@@ -250,6 +276,7 @@ export function mergeEcosystemData(
   // 2. Process non-curated community items from github repos starting with function- or provider-
   for (const repo of gitHubRepos) {
     if (processedRepoNames.has(repo.name)) continue;
+    if (isDeprecatedOrArchived(repo)) continue; // Filter out community archived/deprecated packages!
 
     let category: 'provider' | 'function' | null = null;
     if (repo.name.startsWith('function-')) {
