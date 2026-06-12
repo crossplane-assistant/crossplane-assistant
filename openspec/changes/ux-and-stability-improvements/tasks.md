@@ -6,8 +6,8 @@
 ## 2. Frontend Stability and Core Fixes (Events, Logo)
 
 - [x] 2.1 Update `ui/src/queries/useEventQueries.ts` to return `data?.items || []` instead of the raw `EventList` object, resolving the Events tab crash.
-- [x] 2.2 Copy the `docs/assets/crossplane-assistant.png` file to `ui/src/assets/crossplane-assistant.png`.
-- [x] 2.3 Modify image sources in `App.tsx` to display the new `/src/assets/crossplane-assistant.png` asset.
+- [x] 2.2 Copy the `docs/assets/crossplane-assistant-logo.png` file to `ui/src/assets/crossplane-assistant-logo.png`.
+- [x] 2.3 Modify image sources in `App.tsx` to display the new `/src/assets/crossplane-assistant-logo.png` asset.
 
 ## 3. Responsive Claim Graph Layout Expansion
 

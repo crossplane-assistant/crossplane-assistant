@@ -18,7 +18,7 @@ The application currently suffers from several UI/UX limitations and critical st
 - **Go ProviderRevision Registry Watcher Fix**: Rectify the controller watcher type prototype in Go from `CustomResourceDefinition` to `ProviderRevision`, restoring discovery of all active provider-owned resource kinds.
 - **Cross-Resource Navigation Panel**: Introduce a standardized "Relations" widget/tab in sliding drawers to automatically parse and provide clickable links across the Claim -> XR -> MR -> ProviderConfig chain.
 - **Correct Hook Ordering**: Reposition the `useSearchParams` and related hooks to the top of `ClaimDetailsView.tsx` (before early load/error returns) to solve the Hook count crash.
-- **Logo Asset Update**: Transition the application logo from SVG to the new PNG asset (`docs/assets/crossplane-assistant.png`).
+- **Logo Asset Update**: Transition the application logo from SVG to the new PNG asset (`docs/assets/crossplane-assistant-logo.png`).
 
 ## Capabilities
 

@@ -42,7 +42,7 @@ We will build a lightweight utility to extract references from any Kubernetes ob
 Clicking an MR link from an XR details panel will route to `/explore/managed-resources` and pass the Kind as a query parameter, prompting the list page to load that kind and auto-open the resource drawer.
 
 ### 6. PNG Logo Asset Copying
-We will copy `docs/assets/crossplane-assistant.png` directly into `ui/src/assets/crossplane-assistant.png` during the build/execution phase and change `App.tsx` image sources to point to this new path.
+We will copy `docs/assets/crossplane-assistant-logo.png` directly into `ui/src/assets/crossplane-assistant-logo.png` during the build/execution phase and change `App.tsx` image sources to point to this new path.
 
 ### 7. Correcting React Hook Sequences to Prevent Mismatch Crashes
 To eliminate the `Rendered fewer hooks than expected` exception, we must adhere strictly to the Rules of Hooks. In `ClaimDetailsView.tsx`, the `useSearchParams` hook and matching auto-select `useEffect` will be moved to the very top of the function body, ensuring they are executed *prior* to any early `return` checks for loading (`claimLoading || treeLoading`) or error states.

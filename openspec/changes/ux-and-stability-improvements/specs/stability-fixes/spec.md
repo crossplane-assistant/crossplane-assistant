@@ -16,11 +16,11 @@ The Go backend ProviderRevision registry watcher SHALL initialize its reflector 
 - **THEN** the backend successfully decodes and lists all CustomResourceDefinitions owned by active ProviderRevisions (such as pubsub Topics, CloudSQL instances, buckets, etc.)
 
 ### Requirement: Logo Asset Swap
-The application SHALL utilize the high-resolution PNG logo (`/src/assets/crossplane-assistant.png`) instead of the legacy SVG.
+The application SHALL utilize the high-resolution PNG logo (`/src/assets/crossplane-assistant-logo.png`) instead of the legacy SVG.
 
 #### Scenario: Sidebar logo display
 - **WHEN** the application loads
-- **THEN** the sidebar header displays the updated `/src/assets/crossplane-assistant.png` logo image
+- **THEN** the sidebar header displays the updated `/src/assets/crossplane-assistant-logo.png` logo image
 
 ### Requirement: Safe React Hook Sequencing
 The `ClaimDetailsView` component SHALL declare all of its React Hook instances (including `useSearchParams` and any `useEffect` triggers) at the very top of the component body, preceding any early conditional return blocks.
