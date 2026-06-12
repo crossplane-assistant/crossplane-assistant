@@ -65,6 +65,7 @@ export const ListProviders: React.FC = () => {
         await deleteMutation.mutateAsync(p.metadata?.name);
       }}
       createModalTemplate={PROVIDER_TEMPLATE}
+      ecosystemCategory="provider"
     />
   );
 };

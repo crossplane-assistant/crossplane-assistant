@@ -6,6 +6,8 @@ import { stringify } from 'yaml';
 import { Search, Trash2, X, BookOpen, Plus, Layers } from 'lucide-react';
 import { ResourceRelations } from './ResourceRelations';
 import { SchemaBrowser } from './SchemaBrowser';
+import { EcosystemCatalog } from './EcosystemCatalog';
+import type { EcosystemItem } from '../utils/ecosystemCatalog';
 
 export interface Column<T> {
   header: string;
@@ -29,6 +31,7 @@ interface ResourceListViewProps<T> {
   createModalTemplate?: string;       // Default YAML template content
   createModalTitle?: string;          // Modal header text (e.g. "Create PostgreSQL Claim")
   onCreateSuccess?: (yaml: string) => void; // Success callback
+  ecosystemCategory?: 'provider' | 'function'; // Optional category for ecosystem catalog
 }
 
 export function ResourceListView<T>({
@@ -48,6 +51,7 @@ export function ResourceListView<T>({
   createModalTemplate,
   createModalTitle,
   onCreateSuccess,
+  ecosystemCategory,
 }: ResourceListViewProps<T>) {
   const [selectedItem, setSelectedItem] = useState<T | null>(null);
   const [activeTab, setActiveTab] = useState<string>('view');
@@ -152,65 +156,153 @@ export function ResourceListView<T>({
         ))}
       </div>
 
-      {/* Filter and Table container */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center gap-4">
-          <div className="relative max-w-md flex-1">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-              <Search className="w-4 h-4" />
-            </span>
-            <input
-              type="text"
-              placeholder={`Search ${title.toLowerCase()}...`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm"
-            />
-          </div>
-          {headerRightArea}
-        </div>
+      {/* Tabs / Filter and Table container */}
+      {ecosystemCategory ? (
+        <Tabs.Root defaultValue="installed" className="space-y-6">
+          <Tabs.List className="flex border-b border-slate-200 gap-6">
+            <Tabs.Trigger
+              value="installed"
+              className="py-2.5 text-sm font-semibold text-slate-500 uppercase tracking-wider border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 focus:outline-none cursor-pointer transition-colors"
+            >
+              Installed
+            </Tabs.Trigger>
+            <Tabs.Trigger
+              value="ecosystem"
+              className="py-2.5 text-sm font-semibold text-slate-500 uppercase tracking-wider border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 focus:outline-none cursor-pointer transition-colors"
+            >
+              Ecosystem Hub
+            </Tabs.Trigger>
+          </Tabs.List>
 
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-xs uppercase tracking-wider">
-                {columns.map((col, idx) => (
-                  <th key={idx} className="p-4">{col.header}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {filteredData.map((item, idx) => {
-                const name = getRowName(item);
-                const isSelected = selectedItem && getRowName(selectedItem) === name;
-                return (
-                  <tr
-                    key={name || idx}
-                    onClick={() => {
-                      setSelectedItem(item);
-                      setActiveTab(renderDetailView ? 'view' : 'manifest');
-                    }}
-                    className={`hover:bg-slate-50/80 transition-colors cursor-pointer ${
-                      isSelected ? 'bg-blue-50/30' : ''
-                    }`}
-                  >
-                    {columns.map((col, cIdx) => (
-                      <td key={cIdx} className="p-4">{col.render(item)}</td>
+          <Tabs.Content value="installed" className="space-y-4 outline-none">
+            <div className="flex justify-between items-center gap-4">
+              <div className="relative max-w-md flex-1">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                  <Search className="w-4 h-4" />
+                </span>
+                <input
+                  type="text"
+                  placeholder={`Search ${title.toLowerCase()}...`}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+                />
+              </div>
+              {headerRightArea}
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-xs uppercase tracking-wider">
+                    {columns.map((col, idx) => (
+                      <th key={idx} className="p-4">{col.header}</th>
                     ))}
                   </tr>
-                );
-              })}
-              {filteredData.length === 0 && (
-                <tr>
-                  <td colSpan={columns.length} className="p-8 text-center text-slate-400 italic bg-slate-50/50">
-                    No {title.toLowerCase()} found.
-                  </td>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {filteredData.map((item, idx) => {
+                    const name = getRowName(item);
+                    const isSelected = selectedItem && getRowName(selectedItem) === name;
+                    return (
+                      <tr
+                        key={name || idx}
+                        onClick={() => {
+                          setSelectedItem(item);
+                          setActiveTab(renderDetailView ? 'view' : 'manifest');
+                        }}
+                        className={`hover:bg-slate-50/80 transition-colors cursor-pointer ${
+                          isSelected ? 'bg-blue-50/30' : ''
+                        }`}
+                      >
+                        {columns.map((col, cIdx) => (
+                          <td key={cIdx} className="p-4">{col.render(item)}</td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                  {filteredData.length === 0 && (
+                    <tr>
+                      <td colSpan={columns.length} className="p-8 text-center text-slate-400 italic bg-slate-50/50">
+                        No {title.toLowerCase()} found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Tabs.Content>
+
+          <Tabs.Content value="ecosystem" className="outline-none">
+            <EcosystemCatalog
+              category={ecosystemCategory}
+              onInstall={(item: EcosystemItem) => {
+                setCreateYamlValue(item.yamlTemplate);
+                setShowCreateModal(true);
+              }}
+            />
+          </Tabs.Content>
+        </Tabs.Root>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center gap-4">
+            <div className="relative max-w-md flex-1">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                <Search className="w-4 h-4" />
+              </span>
+              <input
+                type="text"
+                placeholder={`Search ${title.toLowerCase()}...`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm"
+              />
+            </div>
+            {headerRightArea}
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            <table className="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-xs uppercase tracking-wider">
+                  {columns.map((col, idx) => (
+                    <th key={idx} className="p-4">{col.header}</th>
+                  ))}
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {filteredData.map((item, idx) => {
+                  const name = getRowName(item);
+                  const isSelected = selectedItem && getRowName(selectedItem) === name;
+                  return (
+                    <tr
+                      key={name || idx}
+                      onClick={() => {
+                        setSelectedItem(item);
+                        setActiveTab(renderDetailView ? 'view' : 'manifest');
+                      }}
+                      className={`hover:bg-slate-50/80 transition-colors cursor-pointer ${
+                        isSelected ? 'bg-blue-50/30' : ''
+                      }`}
+                    >
+                      {columns.map((col, cIdx) => (
+                        <td key={cIdx} className="p-4">{col.render(item)}</td>
+                      ))}
+                    </tr>
+                  );
+                })}
+                {filteredData.length === 0 && (
+                  <tr>
+                    <td colSpan={columns.length} className="p-8 text-center text-slate-400 italic bg-slate-50/50">
+                      No {title.toLowerCase()} found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Sliding detail drawer */}
       {selectedItem && (

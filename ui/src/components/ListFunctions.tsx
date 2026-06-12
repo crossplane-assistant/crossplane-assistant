@@ -65,6 +65,7 @@ export const ListFunctions: React.FC = () => {
         await deleteMutation.mutateAsync(f.metadata?.name);
       }}
       createModalTemplate={FUNCTION_TEMPLATE}
+      ecosystemCategory="function"
     />
   );
 };
