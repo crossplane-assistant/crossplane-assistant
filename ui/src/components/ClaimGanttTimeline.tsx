@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { ClaimTreeNode } from '../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { ClaimTreeNode, Ref } from '../types';
 import { useTelemetryAverage } from '../queries/useTelemetryQueries';
-import { Clock, CheckCircle2, Gauge } from 'lucide-react';
+import { useEvents } from '../queries/useEventQueries';
+import { Clock, CheckCircle2, Gauge, Activity, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 const slidingStripesStyle = `
 @keyframes stripes-slide {
@@ -31,6 +32,10 @@ interface ClaimGanttTimelineProps {
 export const ClaimGanttTimeline: React.FC<ClaimGanttTimelineProps> = ({ root }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [playheadX, setPlayheadX] = useState<number | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+
+  // Parent-child relationship tracking dictionary
+  const [parentChildRelations, setParentChildRelations] = useState<Record<string, { parents: string[]; children: string[] }>>({});
 
   // 1. Flatten the recursive tree of nodes into a simple array
   const flattenTree = (node: ClaimTreeNode): ClaimTreeNode[] => {
@@ -44,6 +49,33 @@ export const ClaimGanttTimeline: React.FC<ClaimGanttTimelineProps> = ({ root }) 
   };
 
   const allNodes = flattenTree(root);
+
+  // Pre-calculate parent-descendant relationships for instant CSS hover highlights
+  useEffect(() => {
+    const relations: Record<string, { parents: string[]; children: string[] }> = {};
+    
+    const traverse = (node: ClaimTreeNode, ancestors: string[]) => {
+      if (!node.uid) return;
+      
+      relations[node.uid] = { parents: [...ancestors], children: [] };
+      
+      // Mark this node as a child of all upstream ancestors
+      ancestors.forEach((ancId) => {
+        if (relations[ancId]) {
+          relations[ancId].children.push(node.uid!);
+        }
+      });
+      
+      if (node.children) {
+        for (const child of node.children) {
+          traverse(child, [...ancestors, node.uid]);
+        }
+      }
+    };
+    
+    traverse(root, []);
+    setParentChildRelations(relations);
+  }, [root]);
 
   // Filter out any nodes that do not contain a manifest
   const nodesWithManifest = allNodes.filter((n) => n.manifest && n.manifest.metadata?.creationTimestamp);
@@ -133,22 +165,27 @@ export const ClaimGanttTimeline: React.FC<ClaimGanttTimelineProps> = ({ root }) 
         {/* Header Metadata */}
         <div className="bg-slate-50/70 border-b border-slate-100 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="font-extrabold text-sm text-slate-800 uppercase tracking-wider">
-              Provisioning Gantt Timeline
+            <h3 className="font-extrabold text-sm text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <Activity className="w-4 h-4 text-blue-500" /> Provisioning Gantt Profiler
             </h3>
             <p className="text-xs text-slate-400 font-medium">
-              Track the exact sequential progression, scheduling delay, and active provisioning time of claim resources.
+              Segmented lifecycle phases. Hover over rows to view upstream/downstream blocking dependencies and live Kubernetes warnings.
             </p>
           </div>
-          <div className="flex items-center gap-4 text-xs font-mono font-bold text-slate-500 bg-white border border-slate-150 px-3 py-1.5 rounded-lg shadow-2xs self-start">
+          <div className="flex flex-wrap items-center gap-4 text-[10px] font-mono font-bold text-slate-500 bg-white border border-slate-150 px-3 py-1.5 rounded-lg shadow-2xs self-start">
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 bg-slate-200 border border-slate-300 rounded animate-stripes-sliding" />
-              Scheduling Delay
+              Scheduling Wait
+            </span>
+            <span className="w-px h-3 bg-slate-200" />
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 bg-amber-400 border border-amber-500 rounded" />
+              Synced (Crossplane)
             </span>
             <span className="w-px h-3 bg-slate-200" />
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 bg-emerald-400 border border-emerald-500 rounded" />
-              Active Cloud Creation
+              Ready (Cloud Provider)
             </span>
           </div>
         </div>
@@ -210,31 +247,32 @@ export const ClaimGanttTimeline: React.FC<ClaimGanttTimelineProps> = ({ root }) 
               const apiVersion = manifest?.apiVersion || node.version;
               const kind = manifest?.kind || node.kind;
               const name = manifest?.metadata?.name || node.name;
+              const uid = node.uid || '';
 
-              const created = new Date(manifest.metadata.creationTimestamp).getTime();
-              const readyCond = manifest.status?.conditions?.find((c: any) => c.type === 'Ready');
-              const isReady = readyCond?.status === 'True';
-              const readyTime = isReady && readyCond?.lastTransitionTime ? new Date(readyCond.lastTransitionTime).getTime() : undefined;
-
-              const waitDuration = created - startTime;
-              const activeDuration = (readyTime || Date.now()) - created;
-
-              const waitWidth = (waitDuration / totalDuration) * 100;
-              const activeWidth = (activeDuration / totalDuration) * 100;
-              const startOffset = ((created - startTime) / totalDuration) * 100;
+              // Calculate dependency highlighted states
+              let hoverRelation: 'self' | 'parent' | 'child' | 'none' = 'none';
+              if (hoveredNodeId) {
+                if (hoveredNodeId === uid) {
+                  hoverRelation = 'self';
+                } else if (parentChildRelations[hoveredNodeId]?.parents.includes(uid)) {
+                  hoverRelation = 'parent';
+                } else if (parentChildRelations[hoveredNodeId]?.children.includes(uid)) {
+                  hoverRelation = 'child';
+                }
+              }
 
               return (
                 <TimelineRow
-                  key={node.uid || `${kind}-${name}-${index}`}
+                  key={uid || `${kind}-${name}-${index}`}
+                  node={node}
                   kind={kind}
                   apiVersion={apiVersion}
                   name={name}
-                  isReady={isReady}
-                  waitDuration={waitDuration}
-                  activeDuration={activeDuration}
-                  waitWidth={waitWidth}
-                  activeWidth={activeWidth}
-                  startOffset={startOffset}
+                  startTime={startTime}
+                  totalDuration={totalDuration}
+                  hoverRelation={hoverRelation}
+                  onHover={() => uid && setHoveredNodeId(uid)}
+                  onUnhover={() => setHoveredNodeId(null)}
                 />
               );
             })}
@@ -246,32 +284,44 @@ export const ClaimGanttTimeline: React.FC<ClaimGanttTimelineProps> = ({ root }) 
 };
 
 interface TimelineRowProps {
+  node: ClaimTreeNode;
   kind: string;
   apiVersion: string;
   name: string;
-  isReady: boolean;
-  waitDuration: number;
-  activeDuration: number;
-  waitWidth: number;
-  activeWidth: number;
-  startOffset: number;
+  startTime: number;
+  totalDuration: number;
+  hoverRelation: 'self' | 'parent' | 'child' | 'none';
+  onHover: () => void;
+  onUnhover: () => void;
 }
 
 const TimelineRow: React.FC<TimelineRowProps> = ({
+  node,
   kind,
   apiVersion,
   name,
-  isReady,
-  waitDuration,
-  activeDuration,
-  waitWidth,
-  activeWidth,
-  startOffset,
+  startTime,
+  totalDuration,
+  hoverRelation,
+  onHover,
+  onUnhover,
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isRowHovered, setIsRowHovered] = useState(false);
+  const manifest = node.manifest || {};
 
-  // Fetch the cluster-wide average dynamically
+  // Construct namespace safe Ref for Event queries
+  const nodeRef: Ref = {
+    apiVersion,
+    kind,
+    name,
+    namespace: node.namespace || manifest?.metadata?.namespace,
+  };
+
+  // Fetch the cluster-wide average benchmark dynamically
   const { data: telemetry } = useTelemetryAverage(apiVersion, kind);
+
+  // Fetch live resource Events in the background
+  const { data: events } = useEvents(nodeRef);
 
   const formatDuration = (ms: number) => {
     const sec = ms / 1000;
@@ -281,22 +331,126 @@ const TimelineRow: React.FC<TimelineRowProps> = ({
     return `${min}m ${remSec > 0 ? remSec + 's' : ''}`;
   };
 
+  // 1. Core Segment Timings Calculations (incorporating Clock Skew guards)
+  const created = new Date(manifest.metadata.creationTimestamp).getTime();
+  const syncedCond = manifest.status?.conditions?.find((c: any) => c.type === 'Synced');
+  const readyCond = manifest.status?.conditions?.find((c: any) => c.type === 'Ready');
+
+  const isSynced = syncedCond?.status === 'True';
+  const isReady = readyCond?.status === 'True';
+
+  const syncedTime = isSynced && syncedCond?.lastTransitionTime
+    ? Math.max(created, new Date(syncedCond.lastTransitionTime).getTime())
+    : null;
+
+  const readyTime = isReady && readyCond?.lastTransitionTime
+    ? Math.max(syncedTime || created, new Date(readyCond.lastTransitionTime).getTime())
+    : null;
+
+  // Defensive Clamping (Task 4.1 clock skew guards)
+  const waitDuration = Math.max(0, created - startTime);
+
+  let syncedDuration = 0;
+  let readyDuration = 0;
+
+  if (syncedTime !== null) {
+    syncedDuration = Math.max(0, syncedTime - created);
+    const endReadyTime = readyTime || Date.now();
+    readyDuration = Math.max(0, endReadyTime - syncedTime);
+  } else {
+    // Still syncing with Crossplane controller
+    syncedDuration = Math.max(0, (readyTime || Date.now()) - created);
+    readyDuration = 0;
+  }
+
+  const activeDuration = syncedDuration + readyDuration;
+
+  // Percentage widths
+  const waitWidth = (waitDuration / totalDuration) * 100;
+  const activeWidth = (activeDuration / totalDuration) * 100;
+  const startOffset = (Math.max(0, created - startTime) / totalDuration) * 100;
+
+  // Split-bar widths inside the active segment
+  const syncedBarWidth = activeDuration > 0 ? (syncedDuration / activeDuration) * 100 : 100;
+  const readyBarWidth = activeDuration > 0 ? (readyDuration / activeDuration) * 100 : 0;
+
+  // 2. Benchmark marker calculations
   const avgDurationMs = telemetry && telemetry.averageSeconds ? telemetry.averageSeconds * 1000 : null;
   const isSlowerThanAverage = avgDurationMs ? activeDuration > avgDurationMs : false;
   const timeDifference = avgDurationMs ? Math.abs(activeDuration - avgDurationMs) : 0;
 
-  // Compute position of the benchmark marker relative to the active block
-  // Benchmark point is placed relative to the beginning of active provisioning
   const totalBarMs = waitDuration + activeDuration;
   const avgOffsetPercent = avgDurationMs && totalBarMs > 0 ? startOffset + (avgDurationMs / totalBarMs) * activeWidth : null;
 
+  // 3. Live Event Pins calculations and dense-clutter grouping (Task 4.2)
+  const groupedEvents: any[] = [];
+  const groupingThresholdPercent = 3.0; // Group events within 3% of timeline
+
+  if (events && events.length > 0) {
+    const parsedEvents = events
+      .map((ev: any) => {
+        const time = new Date(ev.lastTimestamp || ev.metadata?.creationTimestamp || ev.firstTimestamp).getTime();
+        return {
+          ...ev,
+          time,
+          offset: ((time - startTime) / totalDuration) * 100,
+        };
+      })
+      .filter((ev) => ev.time >= startTime && ev.offset >= 0 && ev.offset <= 100)
+      .sort((a, b) => a.time - b.time);
+
+    for (const ev of parsedEvents) {
+      const existingGroup = groupedEvents.find((g) => Math.abs(g.offset - ev.offset) < groupingThresholdPercent);
+      if (existingGroup) {
+        existingGroup.events.push(ev);
+        if (ev.type === 'Warning') {
+          existingGroup.hasWarning = true;
+        }
+      } else {
+        groupedEvents.push({
+          offset: ev.offset,
+          hasWarning: ev.type === 'Warning',
+          events: [ev],
+        });
+      }
+    }
+  }
+
+  // Row Highlights based on hover dependency relationships
+  let rowHighlightClass = 'bg-white border-y border-transparent';
+  let badgeLabel = null;
+
+  if (hoverRelation === 'self') {
+    rowHighlightClass = 'bg-slate-50 border-y border-slate-200/60 shadow-xs';
+  } else if (hoverRelation === 'parent') {
+    rowHighlightClass = 'bg-indigo-50/20 border-y border-indigo-100/50 shadow-2xs';
+    badgeLabel = (
+      <span className="text-[8px] bg-indigo-100 text-indigo-700 font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 animate-pulse uppercase tracking-wider font-mono">
+        <ArrowUpRight className="w-2.5 h-2.5" /> Parent dependency
+      </span>
+    );
+  } else if (hoverRelation === 'child') {
+    rowHighlightClass = 'bg-sky-50/15 border-y border-sky-100/30 shadow-2xs';
+    badgeLabel = (
+      <span className="text-[8px] bg-sky-100 text-sky-700 font-extrabold px-1.5 py-0.5 rounded flex items-center gap-0.5 uppercase tracking-wider font-mono">
+        <ArrowDownRight className="w-2.5 h-2.5" /> Downstream dependent
+      </span>
+    );
+  }
+
   return (
     <div
-      className="group relative flex items-stretch py-3.5 hover:bg-slate-50/50 px-4 transition-colors duration-150"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      className={`group relative flex items-stretch py-3.5 transition-all duration-150 px-4 ${rowHighlightClass}`}
+      onMouseEnter={() => {
+        setIsRowHovered(true);
+        onHover();
+      }}
+      onMouseLeave={() => {
+        setIsRowHovered(false);
+        onUnhover();
+      }}
     >
-      {/* Label and Status */}
+      {/* Resource Header and badges */}
       <div className="w-[240px] flex-shrink-0 flex items-start gap-2.5 pr-4 border-r border-slate-100 z-10 min-w-0">
         <div className="mt-0.5">
           {isReady ? (
@@ -305,47 +459,135 @@ const TimelineRow: React.FC<TimelineRowProps> = ({
             <Clock className="w-4 h-4 text-amber-500 animate-spin flex-shrink-0 [animation-duration:8s]" />
           )}
         </div>
-        <div className="min-w-0 flex flex-col">
-          <span className="font-extrabold text-[11px] text-slate-800 font-mono tracking-tight uppercase truncate">
-            {kind}
-          </span>
+        <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+          <div className="flex items-center justify-between gap-1.5">
+            <span className="font-extrabold text-[11px] text-slate-800 font-mono tracking-tight uppercase truncate">
+              {kind}
+            </span>
+            {badgeLabel}
+          </div>
           <span className="text-[10px] text-blue-600 font-bold font-mono truncate" title={name}>
             {name}
           </span>
         </div>
       </div>
 
-      {/* Gantt Bar Section */}
+      {/* Gantt Timeline Bar Area */}
       <div className="flex-1 relative flex items-center min-h-[32px] px-2">
-        {/* Timeline Bar wrapper */}
+        
+        {/* Progress Bar Container */}
         <div className="w-full h-7 bg-slate-100/60 rounded-xl relative overflow-hidden border border-slate-150/40">
-          {/* 1. Wait/Scheduling Delay Phase */}
+          
+          {/* Phase 1: Wait / Scheduling delay */}
           {waitWidth > 0 && (
             <div
-              className="absolute top-0 bottom-0 left-0 animate-stripes-sliding bg-slate-200/70 border-r border-dashed border-slate-300"
+              className="absolute top-0 bottom-0 left-0 animate-stripes-sliding bg-slate-200/70 border-r border-dashed border-slate-300 z-10"
               style={{ width: `${waitWidth}%` }}
               title={`Scheduling delay : ${formatDuration(waitDuration)}`}
             />
           )}
 
-          {/* 2. Active Cloud Creation Phase */}
+          {/* Phase 2: Active Creation Box */}
           <div
-            className={`absolute top-0 bottom-0 rounded-r-lg transition-all duration-500 shadow-xs flex items-center justify-between px-3 ${
-              isReady
-                ? 'bg-gradient-to-r from-emerald-400 to-teal-500 border border-emerald-500 shadow-emerald-50/30'
-                : 'bg-gradient-to-r from-amber-400 to-orange-400 border border-amber-500 shadow-amber-50/30 animate-pulse'
-            }`}
+            className="absolute top-0 bottom-0 rounded-r-lg shadow-2xs flex items-stretch overflow-hidden"
             style={{ left: `${startOffset}%`, width: `${activeWidth}%` }}
           >
-            {activeWidth > 15 && (
-              <span className="text-[9px] text-white font-extrabold font-mono tracking-wider drop-shadow-2xs">
-                {formatDuration(activeDuration)}
-              </span>
+            {/* Subphase 2A: Synced block */}
+            {syncedBarWidth > 0 && (
+              <div
+                className={`bg-gradient-to-r from-amber-400 to-amber-500 border-r border-amber-600/10 flex items-center px-2 transition-all ${
+                  !isSynced ? 'animate-pulse' : ''
+                }`}
+                style={{ width: `${syncedBarWidth}%` }}
+                title={`Synced state : ${formatDuration(syncedDuration)}`}
+              >
+                {syncedBarWidth > 20 && activeWidth > 15 && (
+                  <span className="text-[8px] text-amber-950 font-bold font-mono tracking-tighter truncate opacity-70">
+                    {formatDuration(syncedDuration)}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Subphase 2B: Ready block */}
+            {readyBarWidth > 0 && (
+              <div
+                className={`bg-gradient-to-r from-emerald-400 to-teal-500 flex items-center px-2 transition-all ${
+                  isSynced && !isReady ? 'animate-pulse' : ''
+                }`}
+                style={{ width: `${readyBarWidth}%` }}
+                title={`Ready state : ${formatDuration(readyDuration)}`}
+              >
+                {readyBarWidth > 20 && activeWidth > 15 && (
+                  <span className="text-[8px] text-white font-extrabold font-mono tracking-tighter truncate drop-shadow-3xs">
+                    {formatDuration(readyDuration)}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </div>
 
-        {/* 3. Benchmark Marker & Comparison Tooltip */}
+        {/* Live Kubernetes Event Pins Overlay */}
+        {groupedEvents.map((group, idx) => {
+          const isWarning = group.hasWarning;
+          return (
+            <div
+              key={idx}
+              className="absolute top-1/2 transform -translate-y-1/2 z-25 group/pin"
+              style={{ left: `${group.offset}%` }}
+            >
+              {/* Outer pulsing layer for Warnings */}
+              {isWarning && (
+                <div className="absolute top-[-2px] left-[-2px] w-4.5 h-4.5 rounded-full bg-red-400/40 animate-ping pointer-events-none" />
+              )}
+              {/* Core Pin Dot */}
+              <div
+                className={`w-2.5 h-2.5 rounded-full border border-white cursor-help shadow-sm transition-transform hover:scale-150 duration-150 relative z-10 ${
+                  isWarning ? 'bg-red-500' : 'bg-indigo-400'
+                }`}
+              />
+
+              {/* Event Tooltip Card */}
+              <div className="absolute bottom-full mb-2.5 left-1/2 transform -translate-x-1/2 bg-slate-950/90 backdrop-blur-md text-white text-[10px] rounded-xl p-3 shadow-xl border border-slate-800/60 transition-all duration-150 opacity-0 scale-95 pointer-events-none group-hover/pin:opacity-100 group-hover/pin:scale-100 group-hover/pin:pointer-events-auto z-50 w-64 flex flex-col gap-2">
+                <div className="flex justify-between items-center pb-1.5 border-b border-slate-800/80">
+                  <span
+                    className={`text-[8px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded font-mono ${
+                      isWarning
+                        ? 'bg-red-950/50 text-red-400 border border-red-900/50'
+                        : 'bg-indigo-950/50 text-indigo-400 border border-indigo-900/50'
+                    }`}
+                  >
+                    {isWarning ? 'Warning' : 'Normal'} Event
+                  </span>
+                  {group.events.length > 1 && (
+                    <span className="text-[8px] bg-slate-800 text-slate-300 font-extrabold px-1.5 py-0.5 rounded-full">
+                      {group.events.length} events
+                    </span>
+                  )}
+                </div>
+
+                <div className="max-h-36 overflow-y-auto divide-y divide-slate-800/50 pr-0.5">
+                  {group.events.map((ev: any, evIdx: number) => (
+                    <div key={evIdx} className={`${evIdx > 0 ? 'pt-2 mt-2' : ''}`}>
+                      <div className="flex justify-between items-center font-bold text-slate-300">
+                        <span>{ev.reason}</span>
+                        <span className="text-[8px] text-slate-500">
+                          {new Date(ev.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 mt-0.5 text-[9px] leading-relaxed break-words font-medium">
+                        {ev.message}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* 4. Benchmark Marker & Comparison Tooltip */}
         {avgOffsetPercent && avgOffsetPercent <= 100 && (
           <>
             {/* The vertical indigo marker line */}
@@ -358,8 +600,8 @@ const TimelineRow: React.FC<TimelineRowProps> = ({
 
             {/* Glassmorphic Tooltip Card displaying comparison values */}
             <div
-              className={`absolute bottom-full mb-1 bg-slate-900/90 backdrop-blur-md text-white text-[10px] font-mono rounded-xl p-2.5 shadow-xl border border-slate-800 transition-all duration-200 z-40 flex flex-col gap-1 w-52 pointer-events-none ${
-                isHovered ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-1'
+              className={`absolute bottom-full mb-1.5 bg-slate-900/90 backdrop-blur-md text-white text-[10px] font-mono rounded-xl p-2.5 shadow-xl border border-slate-800 transition-all duration-150 z-40 flex flex-col gap-1 w-52 pointer-events-none ${
+                isRowHovered ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-1'
               }`}
               style={{ left: `calc(${avgOffsetPercent}% - 104px)` }}
             >

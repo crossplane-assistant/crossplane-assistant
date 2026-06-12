@@ -20,3 +20,10 @@
 - [x] 4.1 Connect the "Install" action on the cards to trigger the Monaco YAML Creation Modal in the parent `ResourceListView` component, loaded with the specific item's template.
 - [x] 4.2 Verify frontend build consistency by running TypeScript compilation checks.
 - [x] 4.3 Perform a manual verify cycle to check that the catalog operates smoothly in mock-offline conditions, rendering offline presets flawlessly.
+
+## 5. Deprecation & Archival Filtering
+
+- [ ] 5.1 Implement `isDeprecatedOrArchived` utility logic and apply it to filter out community items from the raw GitHub API response.
+- [ ] 5.2 Add `isArchived` support to local presets and display a prominent warning badge (`⚠️ Archived`) on the UI card when detected.
+- [ ] 5.3 Write/update unit tests in `ui/tests/ecosystem-catalog.test.ts` to assert that archived community items are filtered out, and archived curated items are badged.
+- [ ] 5.4 Run compile checks and manually verify that a community item like `function-cue-archived` is hidden successfully.

@@ -36,6 +36,12 @@ This design introduces a client-side Ecosystem Hub utilizing a **Hybrid Local-Hu
   - If **online**: Fetch repos. For each repo matching `function-` or `provider-` prefixes, check if we have a local curated preset. If we do, enrich the curated preset with live star counts and description updates. If we don't, dynamically generate a card as a "Community" component with an automatically generated, valid Kubernetes manifest.
   - If **offline / rate-limited**: Swallow the error gracefully (no alerts, no console errors) and render the local curated list only.
 
+### Decision 4: Deprecation and Archival Handling (Option B)
+- **Option A (Hide everything)**: Completely exclude any archived or deprecated repository from the catalog.
+- **Option B (Hybrid Display)**: Filter and hide archived or deprecated *community* repositories entirely to reduce clutter. However, keep archived/deprecated *curated presets* visible but styled with an explicit warning badge to prevent confusion and safely inform users.
+- **Chosen Approach**: **Option B**.
+- **Rationale**: Community repositories have many dead/archived experimental variants which create excessive noise. Hiding them maintains catalog quality. On the other hand, a curated preset might represent an extremely popular provider that has been recently archived; keeping it visible with a warning badge is highly educational and provides a clear upgrade path.
+
 ## Risks / Trade-offs
 
 - **[Risk] GitHub API Rate Limiting**: Unauthenticated requests to GitHub are limited to 60 requests per hour per IP.

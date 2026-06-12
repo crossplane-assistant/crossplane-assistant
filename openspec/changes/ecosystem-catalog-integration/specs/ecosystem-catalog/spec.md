@@ -31,3 +31,14 @@ The system SHALL open the standard Monaco YAML Creation Modal pre-filled with th
 #### Scenario: Initializing installation modal with curated template
 - **WHEN** the user clicks the "Use Preset" button on the "Go Templating Function" card
 - **THEN** the system SHALL open the Monaco YAML Creation Modal pre-filled with the exact curated YAML definition for `function-go-templating`.
+
+### Requirement: Deprecation and Archival Management
+The system SHALL filter out and hide any community-contributed packages that are archived, disabled, or explicitly marked as deprecated in their GitHub repository name or description. For curated presets, if they are detected as archived or deprecated on GitHub, they SHALL NOT be hidden but instead display a warning badge ("Archived") and restrict installation actions if appropriate to prevent unsafe deployment.
+
+#### Scenario: Filtering archived community packages
+- **WHEN** the Ecosystem Hub fetches dynamic packages from GitHub and detects that a community package (e.g., `function-cue-archived`) is archived or has "-archived" in its name
+- **THEN** the system SHALL exclude it from the rendered community list.
+
+#### Scenario: Badgeing archived curated presets
+- **WHEN** the Ecosystem Hub detects that a curated preset is archived on GitHub
+- **THEN** the system SHALL display an "Archived" warning badge on its card rather than hiding it.
