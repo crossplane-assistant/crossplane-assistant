@@ -12,6 +12,8 @@ export interface EcosystemItem {
   isArchived?: boolean;
 }
 
+export const CURATED_VERSION_CACHE: Record<string, string> = {};
+
 export const CURATED_PRESETS: EcosystemItem[] = [
   // Curated Functions
   {
@@ -302,4 +304,8 @@ export function mergeEcosystemData(
   }
 
   return mergedList;
+}
+
+export function injectVersionIntoYaml(yaml: string, version: string): string {
+  return yaml.replace(/(package:\s+[\w\.\-\/]+:)([\w\.\-\+]+)/g, `$1${version}`);
 }

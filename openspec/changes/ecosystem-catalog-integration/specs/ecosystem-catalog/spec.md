@@ -42,3 +42,25 @@ The system SHALL filter out and hide any community-contributed packages that are
 #### Scenario: Badgeing archived curated presets
 - **WHEN** the Ecosystem Hub detects that a curated preset is archived on GitHub
 - **THEN** the system SHALL display an "Archived" warning badge on its card rather than hiding it.
+
+### Requirement: Lazy Latest Version Discovery
+The system SHALL attempt to fetch the latest release tag dynamically from the GitHub API (`https://api.github.com/repos/crossplane-contrib/<repo-name>/releases/latest`) when the user clicks the install action button on a catalog card. If successful, the system SHALL replace the default package version in the Monaco Editor template with the fetched tag name. If the fetch fails or is offline, the system SHALL fall back to using the default template version.
+
+#### Scenario: Successfully fetching and injecting latest version
+- **WHEN** the user clicks "Use Preset" on "Go Templating Function" while online
+- **THEN** the system SHALL fetch its latest tag (e.g., `v0.6.0`) and display it in the Monaco Editor package field.
+
+#### Scenario: Offline fallback for version fetching
+- **WHEN** the user clicks "Use Preset" on "Go Templating Function" while offline
+- **THEN** the system SHALL immediately display the default prefilled template version without throwing network errors.
+
+### Requirement: Live Curated Version Badges
+The system SHALL dynamically fetch and display the latest release version on curated catalog card badges in the background upon mounting. To protect GitHub API rate limits, the system MUST store these retrieved tags in a global, in-memory session cache so that each curated component is queried at most once per application session.
+
+#### Scenario: Live version badge retrieval
+- **WHEN** the Ecosystem Hub tab mounts while online
+- **THEN** the system SHALL launch background fetches for the active tab's curated items, caching and dynamically updating the card version badges (e.g. updating `v0.4.0` to `v0.12.1`) upon success.
+
+#### Scenario: Caching curated version queries
+- **WHEN** the user switches between explorer pages or tabs
+- **THEN** the system SHALL instantly read the curated versions from the global in-memory session cache instead of issuing duplicate API requests.

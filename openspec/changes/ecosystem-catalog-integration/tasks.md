@@ -32,3 +32,17 @@
 
 - [x] 6.1 Fix state race condition in `ResourceListView.tsx` by removing the `useEffect` trigger and initializing YAML template state directly on user click actions (+ Create and Use Preset).
 - [x] 6.2 Verify build compilation and check that the Monaco Editor displays the precise template of the clicked card.
+
+## 7. Dynamic Version Discovery
+
+- [x] 7.1 Implement `injectVersionIntoYaml` utility helper inside `ui/src/utils/ecosystemCatalog.ts` using regular expressions to insert fetched release tags into YAML manifests.
+- [x] 7.2 Implement lazy-loading version retrieval on card clicked in `EcosystemCatalog.tsx`, using background API calls to `/releases/latest` with proper loading feedback.
+- [x] 7.3 Update unit tests in `ui/tests/ecosystem-catalog.test.ts` to assert that version injection correctly replaces default stable versions with new dynamic versions.
+- [x] 7.4 Verify production build and compilation type safety checks.
+
+## 8. Live Curated Version Badging
+
+- [x] 8.1 Export a global in-memory version cache object `CURATED_VERSION_CACHE` inside `ui/src/utils/ecosystemCatalog.ts`.
+- [x] 8.2 Implement background fetching on-mount inside `EcosystemCatalog.tsx` to retrieve and store latest release versions of displayed curated items in `CURATED_VERSION_CACHE` if connected.
+- [x] 8.3 Dynamically render the live-cached version or fallback default version on the curated card badges with a soft fade-in transition.
+- [x] 8.4 Verify build typecheck compilation and run tests to ensure caching and rendering operate cleanly.

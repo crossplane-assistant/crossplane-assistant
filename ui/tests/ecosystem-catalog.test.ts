@@ -1,4 +1,4 @@
-import { CURATED_PRESETS, mergeEcosystemData } from '../src/utils/ecosystemCatalog';
+import { CURATED_PRESETS, mergeEcosystemData, injectVersionIntoYaml } from '../src/utils/ecosystemCatalog';
 
 describe('Ecosystem Catalog Utilities', () => {
   test('mergeEcosystemData handles offline fallback (empty gitHubRepos)', () => {
@@ -103,5 +103,18 @@ describe('Ecosystem Catalog Utilities', () => {
     expect(goTemplating).toBeDefined();
     // But should be flagged as archived
     expect(goTemplating?.isArchived).toBe(true);
+  });
+
+  test('injectVersionIntoYaml correctly substitutes package versions', () => {
+    const defaultYaml = `apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-go-templating
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-go-templating:v0.4.0`;
+
+    const freshYaml = injectVersionIntoYaml(defaultYaml, 'v0.6.2');
+    expect(freshYaml).toContain('package: xpkg.upbound.io/crossplane-contrib/function-go-templating:v0.6.2');
+    expect(freshYaml).not.toContain(':v0.4.0');
   });
 });

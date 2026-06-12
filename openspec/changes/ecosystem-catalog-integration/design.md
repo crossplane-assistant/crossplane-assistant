@@ -42,6 +42,18 @@ This design introduces a client-side Ecosystem Hub utilizing a **Hybrid Local-Hu
 - **Chosen Approach**: **Option B**.
 - **Rationale**: Community repositories have many dead/archived experimental variants which create excessive noise. Hiding them maintains catalog quality. On the other hand, a curated preset might represent an extremely popular provider that has been recently archived; keeping it visible with a warning badge is highly educational and provides a clear upgrade path.
 
+### Decision 5: Dynamic Version Retrieval (Lazy-Loading on Click)
+- **Option A (Bulk pre-fetching)**: Query the latest release tag for all repositories on render.
+- **Option B (Lazy on-demand fetching)**: Fetch the latest release tag from `/repos/crossplane-contrib/{id}/releases/latest` only when the user clicks the "Use Preset" button.
+- **Chosen Approach**: **Option B**.
+- **Rationale**: Bulk fetching is impossible due to browser-side API rate limits (60/hr). On-demand fetching happens exactly once per user action, uses a single API call, displays a short loading indicator, and falls back instantly to the offline curated template version if the request fails or is rate-limited. This guarantees the user always gets the freshest version without sacrificing catalog speed.
+
+### Decision 6: Live Card Version Badges with Global In-Memory Cache (Option B)
+- **Option A (Pure Lazy Click)**: Only update the version when clicked (our previous approach).
+- **Option B (Asynchronous Curated Pre-fetching on Mount)**: Fetch the latest release version in the background for visible curated items on mount and store them in a global session cache to dynamically update the card badges.
+- **Chosen Approach**: **Option B**.
+- **Rationale**: Displays the correct latest version (like `v0.12.1` for Go Templating) immediately on render, restoring user confidence. Using a global in-memory cache ensures that each curated item is requested at most once per application session (max 11 API calls), keeping the rate limit impact practically non-existent.
+
 ## Risks / Trade-offs
 
 - **[Risk] GitHub API Rate Limiting**: Unauthenticated requests to GitHub are limited to 60 requests per hour per IP.
@@ -49,4 +61,4 @@ This design introduces a client-side Ecosystem Hub utilizing a **Hybrid Local-Hu
 - **[Risk] Broken community links**: External repositories may be renamed or deleted.
   - *Mitigation*: Curated items point to active repositories. Community items use live GitHub API attributes (`html_url`, `description`), making them self-healing.
 - **[Risk] Outdated default versions**: The hardcoded local versions in our registry may fall behind.
-  - *Mitigation*: The user can edit the version tag in the Monaco YAML editor before submitting the installation request.
+  - *Mitigation*: We actively perform a lazy background API query upon card selection to fetch and inject the absolute latest stable release tag into the YAML preset. If offline or rate-limited, the user can still manually edit the version tag in the Monaco YAML editor before submitting.
