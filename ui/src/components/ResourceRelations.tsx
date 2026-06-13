@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { encodeRef } from '../types';
+import { useClaims } from '../queries/useClaimQueries';
 import { Link2, ArrowRight, Layers, FileText, Settings, ShieldAlert } from 'lucide-react';
 
 interface ResourceRelationsProps {
@@ -14,6 +15,104 @@ export const ResourceRelations: React.FC<ResourceRelationsProps> = ({ resource }
   const kind = resource.kind || '';
   const metadata = resource.metadata || {};
   const spec = resource.spec || {};
+
+  // Composition-specific relationship lookup (Blueprint -> Running Instances)
+  if (kind === 'Composition') {
+    const compositeTypeRef = spec.compositeTypeRef;
+    const { data: claims = [], isLoading, error } = useClaims();
+
+    // Filter claims by compositeTypeRef GVK
+    const matchingClaims = claims.filter((claim: any) => {
+      if (!compositeTypeRef) return false;
+      
+      const compositeParts = compositeTypeRef.apiVersion.split('/');
+      const claimParts = claim.apiVersion.split('/');
+      
+      const compositeGroup = compositeParts[0];
+      const claimGroup = claimParts[0];
+      if (compositeGroup !== claimGroup) return false;
+      
+      const compKind = compositeTypeRef.kind;
+      const claimKind = claim.kind;
+      const cleanCompKind = compKind.startsWith('X') ? compKind.slice(1) : compKind;
+      const cleanClaimKind = claimKind.startsWith('X') ? claimKind.slice(1) : claimKind;
+      
+      return cleanCompKind.toLowerCase() === cleanClaimKind.toLowerCase();
+    });
+
+    return (
+      <div className="space-y-6">
+        {/* XRD Interface Info */}
+        {compositeTypeRef && (
+          <div className="border border-slate-100 bg-slate-50/30 rounded-xl p-4 shadow-xs animate-fadeIn">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2.5">
+              <Layers className="w-3.5 h-3.5 text-blue-500" /> Implemented XRD Interface
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-mono font-bold text-slate-700 truncate">
+                  {compositeTypeRef.kind}
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                  {compositeTypeRef.apiVersion}
+                </div>
+              </div>
+              <div className="text-xs font-mono bg-blue-50 text-blue-700 px-2 py-1 rounded font-bold border border-blue-200/50">
+                Interface Signature
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Active Claims List */}
+        <div className="border border-slate-100 bg-slate-50/30 rounded-xl p-4 shadow-xs animate-fadeIn">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 pb-2 border-b border-slate-100">
+            <FileText className="w-3.5 h-3.5 text-indigo-500" /> Active Claims ({matchingClaims.length})
+          </div>
+          {isLoading ? (
+            <div className="text-xs text-slate-400 animate-pulse text-center py-4">Loading active claims...</div>
+          ) : error ? (
+            <div className="text-xs text-red-400 text-center py-4">Error loading claims: {(error as Error).message}</div>
+          ) : matchingClaims.length === 0 ? (
+            <div className="text-xs text-slate-400 italic text-center py-4">
+              No active namespace Claims found for this Composition's GVK interface.
+            </div>
+          ) : (
+            <div className="space-y-3.5 max-h-[300px] overflow-y-auto pr-1">
+              {matchingClaims.map((claim: any, idx: number) => {
+                const ref = {
+                  apiVersion: claim.apiVersion,
+                  kind: claim.kind,
+                  name: claim.metadata?.name,
+                  namespace: claim.metadata?.namespace,
+                };
+                const encoded = encodeRef(ref);
+
+                return (
+                  <div key={idx} className="flex items-center justify-between gap-3 text-xs bg-white border border-slate-100 rounded-lg p-2.5 shadow-2xs hover:border-slate-200 transition-all">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-mono font-bold text-slate-700 truncate" title={claim.metadata?.name}>
+                        {claim.metadata?.namespace ? `${claim.metadata.namespace}/` : ''}{claim.metadata?.name}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                        {claim.kind} ({claim.apiVersion})
+                      </div>
+                    </div>
+                    <Link
+                      to={`/explore/claims/${encoded}`}
+                      className="flex items-center gap-0.5 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 hover:text-indigo-700 font-bold text-[10px] rounded-md transition-all cursor-pointer border border-indigo-100 hover:border-indigo-200 flex-shrink-0"
+                    >
+                      Go to Graph <ArrowRight className="w-2.5 h-2.5 ml-0.5" />
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // 1. Extract Claim Ref (if we are an XR/Composite Resource)
   const claimRef = spec.claimRef;

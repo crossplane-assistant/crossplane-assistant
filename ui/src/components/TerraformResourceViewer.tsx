@@ -5,6 +5,7 @@ import { stringify } from 'yaml';
 import { ResourceContext } from '../types';
 import { ResourcePanel } from './ResourcePanel';
 import { ResourceDependencyViewer } from './ResourceDependencyViewer';
+import { ResourceDataFlowViewer } from './ResourceDataFlowViewer';
 
 interface ViewerProps {
   context: ResourceContext;
@@ -30,6 +31,12 @@ export const TerraformResourceViewer: React.FC<ViewerProps> = ({ context }) => {
           >
             Dependencies
           </Tabs.Trigger>
+          <Tabs.Trigger
+            value="flow"
+            className="px-4 py-2 text-sm font-medium text-slate-600 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 focus:outline-none cursor-pointer transition-colors"
+          >
+            Data Flow
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content value="manifest" className="h-[300px] border border-slate-200 rounded-lg overflow-hidden shadow-inner">
@@ -44,6 +51,10 @@ export const TerraformResourceViewer: React.FC<ViewerProps> = ({ context }) => {
 
         <Tabs.Content value="dependencies" className="mt-2 animate-fadeIn">
           <ResourceDependencyViewer context={context} />
+        </Tabs.Content>
+
+        <Tabs.Content value="flow" className="mt-2 animate-fadeIn">
+          <ResourceDataFlowViewer context={context} />
         </Tabs.Content>
       </Tabs.Root>
     </ResourcePanel>

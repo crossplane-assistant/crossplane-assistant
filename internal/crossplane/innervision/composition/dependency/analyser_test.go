@@ -59,3 +59,33 @@ func TestAnalyser(t *testing.T) {
 
 	}
 }
+
+func TestPipelineAnalyser(t *testing.T) {
+	c := &v1.Composition{}
+	yamlFile, err := os.ReadFile("./testdata/pipeline_composition.yaml")
+	if err != nil {
+		t.Fatalf("Fail to load pipeline composition: %s", err)
+	}
+	if err := yaml2.Unmarshal(yamlFile, c); err != nil {
+		t.Fatalf("Fail to unmarshal pipeline composition: %s", err)
+	}
+
+	analyser := NewAnalyser()
+	err = analyser.Load(c)
+	assert.NoError(t, err)
+
+	// Verify that resources are correctly extracted
+	assert.Equal(t, 2, len(analyser.resources))
+	assert.Equal(t, "DbSubnetGroup", *analyser.resources[0].Name)
+	assert.Equal(t, "RDSInstance", *analyser.resources[1].Name)
+
+	// Get computed edges
+	graph, err := analyser.GetResourceGraph()
+	assert.NoError(t, err)
+
+	// We expect 1 edge from DbSubnetGroup (index 0) to RDSInstance (index 1)
+	assert.Equal(t, 1, len(graph.Edges))
+	assert.Equal(t, 0, graph.Edges[0].Src.ResourceRef.Index)
+	assert.Equal(t, 1, graph.Edges[0].Dst.ResourceRef.Index)
+	assert.Equal(t, "status.atProvider.dbSubnetGroupId", graph.Edges[0].Path)
+}

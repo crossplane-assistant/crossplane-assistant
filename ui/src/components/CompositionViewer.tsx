@@ -24,6 +24,27 @@ export const CompositionViewer: React.FC<CompositionViewerProps> = ({ manifest }
   const [expandVersion, setExpandKey] = useState(0);
   const [defaultExpanded, setDefaultExpanded] = useState(totalItems <= 3);
 
+  // Precompute global indices for pipeline resources
+  let globalResourceCounter = 0;
+  const pipelineStepsWithResources = pipeline.map((step: any) => {
+    const isPatchAndTransform = step.functionRef?.name?.toLowerCase().includes('patch-and-transform') || false;
+    const stepResources = isPatchAndTransform ? (step.input?.resources || []) : [];
+    
+    const resourcesWithGlobalIndices = stepResources.map((resource: any) => {
+      const globalIndex = globalResourceCounter;
+      globalResourceCounter++;
+      return {
+        resource,
+        globalIndex,
+      };
+    });
+    
+    return {
+      ...step,
+      resourcesWithGlobalIndices,
+    };
+  });
+
   if (isLoading) {
     return <div className="p-4 text-center text-slate-500 animate-pulse font-medium">Loading dependencies graph...</div>;
   }
@@ -80,7 +101,7 @@ export const CompositionViewer: React.FC<CompositionViewerProps> = ({ manifest }
       {/* Content Rendering */}
       {pipeline.length > 0 ? (
         <div className="space-y-4">
-          {pipeline.map((step: any, idx: number) => {
+          {pipelineStepsWithResources.map((step: any, idx: number) => {
             const stepName = step.step || `step-${idx}`;
             const functionName = step.functionRef?.name || 'unknown-function';
             const yamlInput = step.input ? stringify(step.input) : '';
@@ -101,28 +122,54 @@ export const CompositionViewer: React.FC<CompositionViewerProps> = ({ manifest }
                 resource={virtualResource}
                 defaultOpen={defaultExpanded}
               >
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium pb-2 border-b border-slate-100">
-                    <span className="flex items-center gap-1">
-                      <Cpu className="w-3 h-3 text-slate-400" /> Function Reference:
-                    </span>
-                    <span className="font-mono font-bold text-slate-600 bg-slate-50 px-1 py-0.5 border border-slate-100 rounded">
-                      {functionName}
-                    </span>
-                  </div>
-                  {step.input ? (
-                    <div className="h-[250px] border border-slate-200 rounded-lg overflow-hidden shadow-inner bg-white mt-2">
-                      <MonacoEditor
-                        height="100%"
-                        language="yaml"
-                        theme="vs-light"
-                        value={yamlInput}
-                        options={{ readOnly: true, minimap: { enabled: false } }}
-                      />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-[10px] text-slate-400 font-medium pb-2 border-b border-slate-100">
+                      <span className="flex items-center gap-1">
+                        <Cpu className="w-3 h-3 text-slate-400" /> Function Reference:
+                      </span>
+                      <span className="font-mono font-bold text-slate-600 bg-slate-50 px-1 py-0.5 border border-slate-100 rounded">
+                        {functionName}
+                      </span>
                     </div>
-                  ) : (
-                    <div className="text-center italic text-slate-400 text-xs py-4">
-                      No configuration input parameters defined for this step.
+                    {step.input ? (
+                      <div className="h-[250px] border border-slate-200 rounded-lg overflow-hidden shadow-inner bg-white mt-2">
+                        <MonacoEditor
+                          height="100%"
+                          language="yaml"
+                          theme="vs-light"
+                          value={yamlInput}
+                          options={{ readOnly: true, minimap: { enabled: false } }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-center italic text-slate-400 text-xs py-4">
+                        No configuration input parameters defined for this step.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Render extracted resources if any */}
+                  {step.resourcesWithGlobalIndices && step.resourcesWithGlobalIndices.length > 0 && (
+                    <div className="mt-4 border-t border-slate-150 pt-4 space-y-4 bg-slate-50/40 p-4 rounded-xl border">
+                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <Layers className="w-3.5 h-3.5 text-blue-500" /> Composed Resources ({step.resourcesWithGlobalIndices.length})
+                      </h4>
+                      <div className="space-y-4">
+                        {step.resourcesWithGlobalIndices.map(({ resource, globalIndex }: any) => (
+                          <div key={`${resource.name || globalIndex}-${expandVersion}`}>
+                            <DynamicResourceViewer
+                              context={{
+                                graph,
+                                resource,
+                                resourceIndex: globalIndex,
+                                composition: manifest,
+                                defaultOpen: defaultExpanded,
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

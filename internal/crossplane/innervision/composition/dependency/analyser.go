@@ -1,7 +1,9 @@
 package dependency
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	v1 "github.com/crossplane/crossplane/apis/apiextensions/v1"
 	"github.com/rs/zerolog/log"
@@ -17,9 +19,22 @@ func NewAnalyser() *Analyser {
 type Analyser struct {
 	provideIndexer *PathIndexer
 	composition    *v1.Composition
+	resources      []v1.ComposedTemplate
 
 	resourcesIndex map[int]*v1.ComposedTemplate
 	edges          []*Edge
+}
+
+type PatchAndTransformInput struct {
+	Resources []v1.ComposedTemplate `json:"resources"`
+}
+
+func extractResourcesFromStepInput(inputRaw []byte) ([]v1.ComposedTemplate, error) {
+	var input PatchAndTransformInput
+	if err := json.Unmarshal(inputRaw, &input); err != nil {
+		return nil, err
+	}
+	return input.Resources, nil
 }
 
 func (a *Analyser) GetEdgesBySrc(srcIdx int) []*Edge {
@@ -57,7 +72,7 @@ func (a *Analyser) initResourceRef(index int, r *v1.ComposedTemplate) *ResourceR
 func (a *Analyser) Load(c *v1.Composition) error {
 
 	a.composition = c
-	resources := c.Spec.Resources
+	a.resources = make([]v1.ComposedTemplate, 0)
 	patchSets := c.Spec.PatchSets
 
 	// Build a map of patch sets
@@ -66,10 +81,31 @@ func (a *Analyser) Load(c *v1.Composition) error {
 		patchSet[ps.Name] = ps
 	}
 
-	a.resourcesIndex = make(map[int]*v1.ComposedTemplate, len(resources))
+	// Resolve resources
+	if len(c.Spec.Resources) > 0 {
+		a.resources = c.Spec.Resources
+	} else if len(c.Spec.Pipeline) > 0 {
+		for _, step := range c.Spec.Pipeline {
+			if step.FunctionRef.Name != "" {
+				name := step.FunctionRef.Name
+				if strings.Contains(strings.ToLower(name), "patch-and-transform") {
+					if step.Input != nil && len(step.Input.Raw) > 0 {
+						stepResources, err := extractResourcesFromStepInput(step.Input.Raw)
+						if err != nil {
+							log.Err(err).Msgf("Error extracting resources from pipeline step %s", step.Step)
+						} else {
+							a.resources = append(a.resources, stepResources...)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	a.resourcesIndex = make(map[int]*v1.ComposedTemplate, len(a.resources))
 
 	// First index all the resources
-	for i, r := range resources {
+	for i, r := range a.resources {
 
 		// Initialize the resource index
 		a.resourcesIndex[i] = &r
@@ -100,7 +136,7 @@ func (a *Analyser) Load(c *v1.Composition) error {
 func (a *Analyser) initEdges() {
 
 	a.edges = make([]*Edge, 0)
-	for i, r := range a.composition.Spec.Resources {
+	for i, r := range a.resources {
 
 		consumer := a.resourcesIndex[i]
 
@@ -207,7 +243,7 @@ type ResourceGraph struct {
 func (a *Analyser) GetResourceGraph() (*ResourceGraph, error) {
 
 	graph := &ResourceGraph{
-		Resources: a.composition.Spec.Resources,
+		Resources: a.resources,
 		Edges:     a.edges,
 	}
 	return graph, nil
