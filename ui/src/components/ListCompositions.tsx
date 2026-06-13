@@ -1,5 +1,6 @@
 import React from 'react';
-import { Clock } from 'lucide-react';
+import { Clock, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useCompositions, useDeleteComposition } from '../queries/useCompositionQueries';
 import { CompositionViewer } from './CompositionViewer';
 import { ResourceListView } from './ResourceListView';
@@ -78,7 +79,19 @@ export const ListCompositions: React.FC = () => {
       onDelete={async (comp) => {
         await deleteMutation.mutateAsync(comp.metadata?.name);
       }}
-      renderDetailView={(comp) => <CompositionViewer manifest={comp} />}
+      renderDetailView={(comp) => (
+        <div className="space-y-4">
+          <div className="flex justify-end px-4 pt-2">
+            <Link
+              to={`/explore/compositions/${comp.metadata?.name}`}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all hover:shadow-md cursor-pointer border border-blue-500 hover:border-blue-600"
+            >
+              Open Workspace <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <CompositionViewer manifest={comp} />
+        </div>
+      )}
       createModalTemplate={COMPOSITION_TEMPLATE}
     />
   );

@@ -5,6 +5,7 @@ import { Library, Link2, Boxes, Server, Box, Cpu, Activity, Layers, CheckCircle2
 import { ListCompositions } from './components/ListCompositions';
 import { ListClaims } from './components/ListClaims';
 import { ClaimDetailsView } from './components/ClaimDetailsView';
+import { CompositionWorkspace } from './components/CompositionWorkspace';
 import { ListXrds } from './components/ListXrds';
 import { ListProviders } from './components/ListProviders';
 import { ListFunctions } from './components/ListFunctions';
@@ -392,6 +393,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/explore/claims/:ref" element={<ClaimDetailsView />} />
         {/* We route "/explore/compositions" to the real ListCompositions component */}
         <Route path="/explore/compositions" element={<ListCompositions />} />
+        <Route path="/explore/compositions/:name" element={<CompositionWorkspace />} />
         <Route path="/explore/managed-resources" element={<ListManagedResources />} />
         <Route path="/explore/xrds" element={<ListXrds />} />
         <Route path="/explore/providers" element={<ListProviders />} />
