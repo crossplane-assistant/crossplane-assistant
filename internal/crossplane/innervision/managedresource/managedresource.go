@@ -2,6 +2,8 @@ package managedresource
 
 import (
 	"context"
+	"sync"
+
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/providerrevision"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/unstruct"
 	"github.com/ldassonville/crossplane-assistant/internal/kube/resource"
@@ -37,30 +39,35 @@ func NewService(
 	prRegistry *providerrevision.Registry,
 	crdRegistry *resource.CRDRegistry,
 ) *Service {
-	return &Service{
+	s := &Service{
 		resourceResolver: resourceResolver,
 		prRegistry:       prRegistry,
 		crdRegistry:      crdRegistry,
 	}
+	s.listFunc = s.List
+	return s
 }
 
 type Service struct {
 	resourceResolver *unstruct.ResourceResolver
 	prRegistry       *providerrevision.Registry
 	crdRegistry      *resource.CRDRegistry
+	listFunc         func(ctx context.Context, gvk schema.GroupVersionKind) (*unstructured.UnstructuredList, error)
 }
 
 type MRKind struct {
-	Provider string `json:"provider"`
-	Group    string `json:"group"`
-	Version  string `json:"version"`
-	Kind     string `json:"kind"`
-	Resource string `json:"resource"`
+	Provider   string `json:"provider"`
+	Group      string `json:"group"`
+	Version    string `json:"version"`
+	Kind       string `json:"kind"`
+	Resource   string `json:"resource"`
+	TotalItems int    `json:"totalItems"`
+	ReadyItems int    `json:"readyItems"`
 }
 
 func (s *Service) ListKind(ctx context.Context) ([]MRKind, error) {
 
-	var res = make([]MRKind, 0)
+	var initialKinds = make([]MRKind, 0)
 
 	revisions := s.prRegistry.ListActive()
 	for _, revision := range revisions {
@@ -84,19 +91,6 @@ func (s *Service) ListKind(ctx context.Context) ([]MRKind, error) {
 					crd.Spec.Names.Kind == "ClusterProviderConfig" {
 					continue
 				}
-				/*
-					for _, version := range crd.Spec.Versions {
-
-						mrk := MRKind{
-							Group:    crd.Spec.Group,
-							Version:  version.Name,
-							Kind:     crd.Spec.Names.Kind,
-							Provider: revision.Labels["pkg.crossplane.io/package"],
-							Resource: crd.Spec.Names.Plural + "." + crd.Spec.Group,
-						}
-						res = append(res, mrk)
-					}
-				*/
 
 				mrk := MRKind{
 					Group:    crd.Spec.Group,
@@ -105,12 +99,72 @@ func (s *Service) ListKind(ctx context.Context) ([]MRKind, error) {
 					Provider: revision.Labels["pkg.crossplane.io/package"],
 					Resource: crd.Spec.Names.Plural + "." + crd.Spec.Group,
 				}
-				res = append(res, mrk)
+				initialKinds = append(initialKinds, mrk)
 
 			}
 		}
 	}
-	return res, nil
+
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, 10)
+
+	kinds := make([]MRKind, len(initialKinds))
+	copy(kinds, initialKinds)
+
+	for i := range kinds {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			kindObj := kinds[idx]
+			gvk := schema.GroupVersionKind{
+				Group:   kindObj.Group,
+				Version: kindObj.Version,
+				Kind:    kindObj.Kind,
+			}
+
+			instances, err := s.listFunc(ctx, gvk)
+			if err != nil {
+				log.Debug().Err(err).Msgf("Failed to list instances for kind %s", kindObj.Kind)
+				return
+			}
+
+			total := len(instances.Items)
+			ready := 0
+			for _, item := range instances.Items {
+				if isResourceReady(&item) {
+					ready++
+				}
+			}
+
+			kinds[idx].TotalItems = total
+			kinds[idx].ReadyItems = ready
+		}(i)
+	}
+
+	wg.Wait()
+	return kinds, nil
+}
+
+func isResourceReady(obj *unstructured.Unstructured) bool {
+	conditions, found, _ := unstructured.NestedSlice(obj.Object, "status", "conditions")
+	if !found {
+		return false
+	}
+	for _, rawCond := range conditions {
+		cond, ok := rawCond.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		cType, _ := cond["type"].(string)
+		cStatus, _ := cond["status"].(string)
+		if cType == "Ready" && cStatus == "True" {
+			return true
+		}
+	}
+	return false
 }
 
 // List Give all the functions installed in the cluster

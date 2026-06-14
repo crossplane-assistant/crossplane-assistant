@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	apiextensionsfake "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/fake"
 )
@@ -133,6 +135,43 @@ func TestListKind(t *testing.T) {
 
 	// Create service
 	svc := NewService(nil, prRegistry, crdRegistry)
+	svc.listFunc = func(ctx context.Context, gvk schema.GroupVersionKind) (*unstructured.UnstructuredList, error) {
+		assert.Equal(t, "Topic", gvk.Kind)
+		return &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name": "topic-1",
+						},
+						"status": map[string]interface{}{
+							"conditions": []interface{}{
+								map[string]interface{}{
+									"type":   "Ready",
+									"status": "True",
+								},
+							},
+						},
+					},
+				},
+				{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name": "topic-2",
+						},
+						"status": map[string]interface{}{
+							"conditions": []interface{}{
+								map[string]interface{}{
+									"type":   "Ready",
+									"status": "False",
+								},
+							},
+						},
+					},
+				},
+			},
+		}, nil
+	}
 
 	// Invoke ListKind
 	kinds, err := svc.ListKind(context.Background())
@@ -148,4 +187,6 @@ func TestListKind(t *testing.T) {
 	assert.Equal(t, "v1beta1", kinds[0].Version)
 	assert.Equal(t, "provider-gcp-pubsub", kinds[0].Provider)
 	assert.Equal(t, "topics.pubsub.gcp.m.upbound.io", kinds[0].Resource)
+	assert.Equal(t, 2, kinds[0].TotalItems)
+	assert.Equal(t, 1, kinds[0].ReadyItems)
 }

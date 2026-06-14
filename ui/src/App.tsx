@@ -70,8 +70,9 @@ const ExplorerLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
         break;
       case '/explore/managed-resources':
         isLoading = mrKindsLoading;
-        total = mrKinds?.length || 0;
-        ready = total;
+        total = mrKinds?.reduce((acc, k) => acc + (k.totalItems || 0), 0) || 0;
+        ready = mrKinds?.reduce((acc, k) => acc + (k.readyItems || 0), 0) || 0;
+        hasHealth = true;
         break;
       case '/explore/xrds':
         isLoading = xrdsLoading;

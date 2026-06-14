@@ -115,6 +115,8 @@ export interface ManagedResourceKind {
   version: string;
   kind: string;
   resource: string;
+  totalItems?: number;
+  readyItems?: number;
 }
 
 export interface TelemetryAverageResponse {

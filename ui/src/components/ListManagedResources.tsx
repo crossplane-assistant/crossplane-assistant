@@ -99,11 +99,16 @@ export const ListManagedResources: React.FC = () => {
         onChange={handleKindChange}
         className="px-3 py-1.5 border border-slate-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm cursor-pointer"
       >
-        {kinds.map((k, idx) => (
-          <option key={idx} value={`${k.group}/${k.version}:${k.kind}`}>
-            {k.kind} ({k.group})
-          </option>
-        ))}
+        {kinds.map((k, idx) => {
+          const total = k.totalItems || 0;
+          const ready = k.readyItems || 0;
+          const countStr = total > 0 ? `${total} active, ${ready}/${total} ready` : '0 active';
+          return (
+            <option key={idx} value={`${k.group}/${k.version}:${k.kind}`}>
+              {k.kind} ({countStr}) ({k.group})
+            </option>
+          );
+        })}
       </select>
     </div>
   );
