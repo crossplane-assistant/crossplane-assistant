@@ -6,6 +6,11 @@ import { DynamicResourceViewer } from './DynamicResourceViewer';
 import { CompositionGraph } from './CompositionGraph';
 import MonacoEditor from '@monaco-editor/react';
 import { stringify } from 'yaml';
+import { CompositionCanvas } from './CompositionCanvas';
+import { TransformInspector } from './TransformInspector';
+import { parseYAMLToIR } from '../utils/compositionParser';
+import { Edge } from '@xyflow/react';
+import { Sparkles, Hammer } from 'lucide-react';
 import { 
   ArrowLeft, 
   Layers, 
@@ -38,6 +43,13 @@ export const CompositionWorkspace: React.FC = () => {
   } | null>(null);
   const [sandboxError, setSandboxError] = React.useState<string>('');
 
+  const view = searchParams.get('view') || 'tree';
+  const isCanvasView = view === 'canvas';
+
+  const [localYaml, setLocalYaml] = React.useState<string>('');
+  const [selectedEdge, setSelectedEdge] = React.useState<Edge | null>(null);
+  const [canvasParseError, setCanvasParseError] = React.useState<string>('');
+
   // Auto-collapse graph when selection changes (from empty to selected)
   React.useEffect(() => {
     if (selected) {
@@ -48,6 +60,28 @@ export const CompositionWorkspace: React.FC = () => {
   }, [selected]);
 
   const { data: composition, isLoading, error } = useComposition(name);
+
+  React.useEffect(() => {
+    if (composition && !localYaml) {
+      setLocalYaml(stringify(composition));
+    }
+  }, [composition, localYaml]);
+
+  React.useEffect(() => {
+    if (localYaml) {
+      setSandboxCompYaml(localYaml);
+      try {
+        const parsed = parseYAMLToIR(localYaml);
+        if (parsed.name === 'Unknown' && localYaml.trim() !== '') {
+          setCanvasParseError('Structure YAML invalide ou non supportée pour le Canvas.');
+        } else {
+          setCanvasParseError('');
+        }
+      } catch (err: any) {
+        setCanvasParseError(err.message || 'Erreur lors du parsing du YAML.');
+      }
+    }
+  }, [localYaml]);
 
   React.useEffect(() => {
     if (selected === 'sandbox' && composition) {
@@ -630,63 +664,146 @@ crossplane version`}
           </div>
         </div>
 
-        <button
-          onClick={() => handleSelect('sandbox')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold rounded-lg border transition-all cursor-pointer ${
-            selected === 'sandbox'
-              ? 'bg-blue-600 text-white border-blue-700 shadow-xs'
-              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs hover:text-slate-900'
-          }`}
-        >
-          <span>🧪 Bac à Sable</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              if (isCanvasView) {
+                searchParams.delete('view');
+              } else {
+                searchParams.set('view', 'canvas');
+              }
+              setSearchParams(searchParams);
+            }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold rounded-lg border transition-all cursor-pointer ${
+              isCanvasView
+                ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs animate-pulse'
+                : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs hover:text-slate-900'
+            }`}
+          >
+            <span>🎨 Visual Canvas</span>
+          </button>
+
+          <button
+            onClick={() => handleSelect('sandbox')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold rounded-lg border transition-all cursor-pointer ${
+              selected === 'sandbox'
+                ? 'bg-blue-600 text-white border-blue-700 shadow-xs'
+                : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs hover:text-slate-900'
+            }`}
+          >
+            <span>🧪 Bac à Sable</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Workspace Workspace Splits */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Navigation Sidebar (25% width) */}
-        <div className="w-[300px] border-r border-slate-200 bg-slate-50/50 flex-none flex flex-col overflow-y-auto">
-          <CompositionTreeNav 
-            composition={composition} 
-            selected={selected} 
-            onSelect={handleSelect} 
-            matchingClaims={matchingClaims}
-          />
-        </div>
-
-        {/* Main Content Pane (75% width) */}
-        <div className="flex-1 bg-white overflow-hidden flex flex-col">
-          {/* Top Collapsible Graph Section */}
-          <div className="border-b border-slate-150 bg-slate-50/20 p-5 flex-none flex flex-col space-y-2.5 animate-fadeIn">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <GitFork className="w-4 h-4 text-blue-500 animate-pulse" /> Blueprint Workflow Diagram
-              </h3>
-              <button
-                onClick={() => setIsGraphCollapsed(!isGraphCollapsed)}
-                className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-md font-semibold text-[10px] text-slate-600 hover:text-slate-800 transition-colors cursor-pointer shadow-xs"
-              >
-                {isGraphCollapsed ? 'Expand Diagram ↓' : 'Collapse Diagram ↑'}
-              </button>
+      {isCanvasView ? (
+        <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/20 animate-fadeIn h-full">
+          {/* Fallback Warning Banner if there's an AST parser error */}
+          {canvasParseError && (
+            <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 text-amber-800 text-xs font-semibold flex items-center gap-2 flex-none">
+              <span className="text-sm">⚠️</span>
+              <span>{canvasParseError}</span>
             </div>
-            
-            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-              isGraphCollapsed ? 'max-h-0 opacity-0' : 'max-h-[350px] opacity-100'
-            }`}>
-              <CompositionGraph
-                composition={composition}
-                activeNodeId={selected}
-                onSelectNode={handleSelect}
-              />
+          )}
+          
+          <div className="flex-1 flex overflow-hidden h-full">
+            {/* Left Panel: Monaco YAML Editor */}
+            <div className="w-1/2 border-r border-slate-200 flex flex-col bg-white h-full">
+              <div className="px-4 py-2 border-b bg-slate-50/50 flex items-center justify-between flex-none">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <Hammer className="w-3.5 h-3.5 text-slate-500" /> Monaco Editor (Source of Truth)
+                </span>
+                <span className="text-[10px] text-slate-400 italic">Auto-syncs bi-directionally</span>
+              </div>
+              <div className="flex-1 relative">
+                <MonacoEditor
+                  height="100%"
+                  language="yaml"
+                  theme="vs-light"
+                  value={localYaml}
+                  onChange={(val) => setLocalYaml(val || '')}
+                  options={{ minimap: { enabled: false }, automaticLayout: true }}
+                />
+              </div>
+            </div>
+
+            {/* Right Panel: React Flow Canvas & Side Inspector */}
+            <div className="w-1/2 flex relative overflow-hidden h-full">
+              <div className="flex-1 flex flex-col h-full bg-slate-50/20">
+                <div className="px-4 py-2 border-b bg-slate-50/50 flex items-center justify-between flex-none">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-500" /> Interactive Canvas (No-Code Builder)
+                  </span>
+                  <span className="text-[10px] text-slate-400 italic">Drag connections to patch fields</span>
+                </div>
+                <div className="flex-1 p-4 overflow-hidden h-full">
+                  <CompositionCanvas
+                    yamlString={localYaml}
+                    onYamlChange={setLocalYaml}
+                    onSelectEdge={setSelectedEdge}
+                  />
+                </div>
+              </div>
+
+              {/* Transform side inspector if a patch edge is clicked */}
+              {selectedEdge && (
+                <TransformInspector
+                  selectedEdge={selectedEdge}
+                  yamlString={localYaml}
+                  onYamlChange={setLocalYaml}
+                  onClose={() => setSelectedEdge(null)}
+                />
+              )}
             </div>
           </div>
+        </div>
+      ) : (
+        <div className="flex-1 flex overflow-hidden">
+          {/* Navigation Sidebar (25% width) */}
+          <div className="w-[300px] border-r border-slate-200 bg-slate-50/50 flex-none flex flex-col overflow-y-auto">
+            <CompositionTreeNav 
+              composition={composition} 
+              selected={selected} 
+              onSelect={handleSelect} 
+              matchingClaims={matchingClaims}
+            />
+          </div>
 
-          {/* Bottom Selected Details Section */}
-          <div className="flex-1 overflow-y-auto p-8 bg-slate-50/10">
-            {renderMainPane()}
+          {/* Main Content Pane (75% width) */}
+          <div className="flex-1 bg-white overflow-hidden flex flex-col">
+            {/* Top Collapsible Graph Section */}
+            <div className="border-b border-slate-150 bg-slate-50/20 p-5 flex-none flex flex-col space-y-2.5 animate-fadeIn">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <GitFork className="w-4 h-4 text-blue-500 animate-pulse" /> Blueprint Workflow Diagram
+                </h3>
+                <button
+                  onClick={() => setIsGraphCollapsed(!isGraphCollapsed)}
+                  className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-md font-semibold text-[10px] text-slate-600 hover:text-slate-800 transition-colors cursor-pointer shadow-xs"
+                >
+                  {isGraphCollapsed ? 'Expand Diagram ↓' : 'Collapse Diagram ↑'}
+                </button>
+              </div>
+              
+              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                isGraphCollapsed ? 'max-h-0 opacity-0' : 'max-h-[350px] opacity-100'
+              }`}>
+                <CompositionGraph
+                  composition={composition}
+                  activeNodeId={selected}
+                  onSelectNode={handleSelect}
+                />
+              </div>
+            </div>
+
+            {/* Bottom Selected Details Section */}
+            <div className="flex-1 overflow-y-auto p-8 bg-slate-50/10">
+              {renderMainPane()}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
