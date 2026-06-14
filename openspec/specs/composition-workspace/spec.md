@@ -20,17 +20,16 @@ The left-hand navigation tree SHALL parse and display the hierarchical structure
 - **THEN** clicking on a tree node updates the URL query parameters (e.g., `?selected=resource:RDSInstance`)
 
 ### Requirement: Dynamic Main Workspace Pane
-The right-hand main viewing pane SHALL react to the selected node in the navigation tree. It SHALL render full-width Monaco editors for raw YAML inputs, full-width Data Flow and Dependency tabs for composed resources, and action summaries for selected Claims.
+The Composition Workspace SHALL provide a navigation sidebar to inspect pipelines, composed resources, active claims, and a new option to enter Sandbox mode.
 
-#### Scenario: Inspecting a Pipeline Step Configuration
-- **WHEN** the user selects a "Config" node under a Pipeline Step
-- **THEN** the main pane displays the raw YAML input configuration in a full-height, full-width Monaco editor
+#### Scenario: Navigating to the Sandbox mode
+- **WHEN** the user selects the "Sandbox Playpen" node in the tree navigation or clicks the header action
+- **THEN** the URL is updated to `?selected=sandbox`
+- **THEN** the main view pane splits into an Input section (with Dummy Claim and Composition editors) and an Output section (Rendered Resources and Diagnostics)
 
-#### Scenario: Inspecting a Composed Resource
-- **WHEN** the user selects a Composed Resource node
-- **THEN** the main pane displays the resource details, spreading the "Data Flow" and "Dependencies" tabs across the full available width for optimal readability
-
-#### Scenario: Inspecting an Active Claim
-- **WHEN** the user selects an Active Claim node
-- **THEN** the main pane displays a summary of the Claim's health status and provides prominent action buttons to open its interactive dependency graph or Gantt timeline
+#### Scenario: Initializing the Sandbox View
+- **WHEN** the Sandbox mode is rendered for the first time
+- **THEN** the Dummy Claim editor is pre-populated automatically via the Dummy Claim YAML Generation algorithm
+- **THEN** the Composition editor is pre-populated with the actual live YAML of the current Composition
+- **THEN** a "Render / Simulate" action button is available to submit the payload to the backend
 

@@ -1,6 +1,6 @@
 ## MODIFIED Requirements
 
-### Requirement: Render Composition Workspace Structure
+### Requirement: Dynamic Main Workspace Pane
 The Composition Workspace SHALL provide a navigation sidebar to inspect pipelines, composed resources, active claims, and a new option to enter Sandbox mode.
 
 #### Scenario: Navigating to the Sandbox mode
