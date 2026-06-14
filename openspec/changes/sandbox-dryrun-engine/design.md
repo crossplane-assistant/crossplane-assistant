@@ -17,7 +17,10 @@ Currently, the `CompositionWorkspace.tsx` allows users to explore the static def
 
 ### Decision 1: Hybrid Backend Rendering Engine
 - **Decision**: The Go backend will expose `POST /crossplane/sandbox/render`. It will first check if the `crossplane` CLI binary is available on the system `PATH`.
-  - **Option A (CLI available)**: It writes the incoming Claim and Composition YAMLs to temporary files and executes `crossplane beta render claim.yaml composition.yaml`. It captures stdout (the rendered JSON/YAML stream) and stderr (errors/diagnostics) and returns them.
+  - **Option A (CLI available)**: It writes the incoming Claim and Composition YAMLs to temporary files.
+    - It first attempts to execute the modern GA command: `crossplane composition render claim.yaml composition.yaml`.
+    - If that execution returns an error and stderr contains signs of an unrecognized command (such as `unexpected argument beta` or `unknown command` / `unexpected argument`), or if it returns exit code 80/unrecognized, it falls back to the legacy command: `crossplane beta render claim.yaml composition.yaml`.
+    - It captures stdout (the rendered JSON/YAML stream) and stderr (errors/diagnostics) from the succeeding command and returns them.
   - **Option B (CLI not available)**: It returns an explicit error explaining that local rendering requires the Crossplane CLI to be installed, providing a link to installation docs. *Rationale*: Re-implementing `beta render` with full function runner support (Docker/gRPC) in pure Go is too complex and brittle compared to wrapping the official tool.
 
 ### Decision 2: OpenAPI Dummy Claim Generation Algorithm
@@ -31,6 +34,17 @@ Currently, the `CompositionWorkspace.tsx` allows users to explore the static def
 - **Decision**: The UI will reuse `CompositionWorkspace.tsx`. When `selected=sandbox`, the main pane is split into two halves:
   - **Left (Input)**: Two tabs or a stacked view of Monaco editors containing the Dummy Claim and the Composition.
   - **Right (Output)**: A "Render" button that calls the backend, followed by a read-only Monaco editor displaying the raw rendered resources and a Diagnostics panel for errors.
+
+### Decision 4: REST API Composition GVK Restoration
+- **Decision**: When client-go gets a typed object like `v1.Composition` from the API, it automatically strips `apiVersion` and `kind` fields (setting them to `""`) since the type is already known. This causes `stringify(composition)` in the frontend to produce YAML missing these fields, which subsequently fails in the CLI dry-run. 
+  - We will explicitly populate `composition.APIVersion = "apiextensions.crossplane.io/v1"` and `composition.Kind = "Composition"` in the `Get` and `List` methods inside `internal/crossplane/innervision/composition/composition.go`. This preserves standard Kubernetes structure inside the returned JSON.
+
+### Decision 5: Auto-Detection and Generation of functions.yaml
+- **Decision**: Compositions using `spec.mode: Pipeline` require at least one function definition (usually passed as `functions.yaml`) when rendered outside a directory containing `crossplane-project.yaml`. 
+  - We will implement an automatic parsing step in `internal/crossplane/innervision/sandbox/service.go`.
+  - It will unmarshal the incoming Composition YAML into a lightweight structure to check if `spec.mode` is `Pipeline` and read the unique names of the functions in `spec.pipeline[*].functionRef.name`.
+  - For each detected function name, it will generate a temporary multi-document `functions.yaml` file on disk using a built-in lookup catalog mapping names (e.g. `function-patch-and-transform` -> `xpkg.upbound.io/crossplane-contrib/function-patch-and-transform:v0.3.0`).
+  - This temporary `functions.yaml` will be supplied as the third positional argument to the `crossplane composition render` command. This hides all complexity from the frontend and provides an out-of-the-box dry-run.
 
 ## Risks / Trade-offs
 

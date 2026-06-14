@@ -261,3 +261,82 @@ func (s *Service) writeToCache(group, version, kind string, schema *v1.JSONSchem
 
 	return os.WriteFile(filepath, data, 0644)
 }
+
+// GenerateDummyClaim generates a boilerplate YAML string for the given GVK using its OpenAPI schema
+func (s *Service) GenerateDummyClaim(ctx context.Context, group, version, kind string) (string, error) {
+	schemaProps, err := s.GetSchema(ctx, group, version, kind)
+	if err != nil {
+		return "", err
+	}
+
+	var sb strings.Builder
+	
+	// Print GroupVersionKind
+	apiVersion := version
+	if group != "" {
+		apiVersion = group + "/" + version
+	}
+	sb.WriteString(fmt.Sprintf("apiVersion: %s\n", apiVersion))
+	sb.WriteString(fmt.Sprintf("kind: %s\n", kind))
+	sb.WriteString("metadata:\n  name: dummy-claim\n  namespace: default\n")
+
+	if schemaProps == nil {
+		return sb.String(), nil
+	}
+
+	if spec, ok := schemaProps.Properties["spec"]; ok {
+		sb.WriteString("spec:\n")
+		generateYamlFromSchema(&spec, &sb, 1, false)
+	}
+
+	return sb.String(), nil
+}
+
+func generateYamlFromSchema(prop *v1.JSONSchemaProps, sb *strings.Builder, indentLevel int, commentOut bool) {
+	indent := strings.Repeat("  ", indentLevel)
+
+	for key, subProp := range prop.Properties {
+		isRequired := false
+		for _, req := range prop.Required {
+			if req == key {
+				isRequired = true
+				break
+			}
+		}
+
+		shouldComment := commentOut || !isRequired
+
+		// Add description as comment if it's commented out and has a description
+		if shouldComment && subProp.Description != "" {
+			desc := strings.ReplaceAll(subProp.Description, "\n", "\n"+indent+"# ")
+			sb.WriteString(fmt.Sprintf("%s# %s\n", indent, desc))
+		}
+
+		linePrefix := indent
+		if shouldComment {
+			linePrefix = indent + "# "
+		}
+
+		if len(subProp.Properties) > 0 {
+			sb.WriteString(fmt.Sprintf("%s%s:\n", linePrefix, key))
+			generateYamlFromSchema(&subProp, sb, indentLevel+1, shouldComment)
+		} else {
+			// Generate placeholder based on type
+			val := "value"
+			switch subProp.Type {
+			case "string":
+				val = "\"string\""
+			case "integer", "number":
+				val = "0"
+			case "boolean":
+				val = "false"
+			case "array":
+				val = "[]"
+			case "object":
+				val = "{}"
+			}
+			sb.WriteString(fmt.Sprintf("%s%s: %s\n", linePrefix, key, val))
+		}
+	}
+}
+

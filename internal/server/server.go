@@ -20,6 +20,7 @@ import (
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/managedresource"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/provider"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/providerrevision"
+	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/sandbox"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/schema"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/telemetry"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/unstruct"
@@ -162,6 +163,13 @@ func (a *ApiServer) Start(staticFS fs.FS) error {
 	schemaService := schema.NewService(crdRegistry, discoveryClient)
 	schemaHandler := schema.NewHandler(schemaService)
 	a.e.Handle("GET", "/crossplane/schemas", schemaHandler.GetSchema)
+	a.e.Handle("GET", "/crossplane/sandbox/dummy-claim", schemaHandler.GetDummyClaim)
+
+	sandboxService := sandbox.NewService()
+	sandboxHandler := sandbox.NewHandler(sandboxService)
+	a.e.Handle("POST", "/crossplane/sandbox/render", sandboxHandler.Render)
+
+
 
 	// Setup static file serving (must be after API routes for proper precedence)
 	a.setupStaticRoutes(staticFS)

@@ -35,3 +35,24 @@ func (h *Handler) GetSchema(c *gin.Context) {
 
 	c.JSON(http.StatusOK, schema)
 }
+
+// GetDummyClaim handles requests for generating a boilerplate Dummy Claim YAML
+func (h *Handler) GetDummyClaim(c *gin.Context) {
+	group := c.Query("group")
+	version := c.Query("version")
+	kind := c.Query("kind")
+
+	if version == "" || kind == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "version and kind query parameters are required"})
+		return
+	}
+
+	yamlStr, err := h.service.GenerateDummyClaim(c.Request.Context(), group, version, kind)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.String(http.StatusOK, yamlStr)
+}
+

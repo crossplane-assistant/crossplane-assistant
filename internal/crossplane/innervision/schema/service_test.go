@@ -130,3 +130,63 @@ spec:
 	cachedFile := filepath.Join(tmpCacheDir, "database.aws.upbound.io-v1beta1-RDSInstance.json")
 	assert.FileExists(t, cachedFile)
 }
+
+func TestGenerateDummyClaim(t *testing.T) {
+	tmpCacheDir, err := os.MkdirTemp("", "schema-test-cache-dummy")
+	assert.NoError(t, err)
+	defer os.RemoveAll(tmpCacheDir)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/yaml")
+		w.WriteHeader(http.StatusOK)
+		crdYaml := `apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: compositethings.database.aws.upbound.io
+spec:
+  group: database.aws.upbound.io
+  names:
+    kind: CompositeThing
+    plural: compositethings
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - requiredField
+            properties:
+              requiredField:
+                type: string
+              optionalField:
+                type: integer
+                description: "An optional integer field"
+`
+		_, _ = w.Write([]byte(crdYaml))
+	}))
+	defer server.Close()
+
+	fakeExtensions := apiextensionsfake.NewSimpleClientset()
+	fakeDiscovery := &fake.FakeDiscovery{Fake: &fakeExtensions.Fake}
+	crdClient := fakeExtensions.ApiextensionsV1().CustomResourceDefinitions()
+	crdRegistry := resource.NewCRDRegistry(crdClient)
+
+	svc := NewService(crdRegistry, fakeDiscovery)
+	svc.cacheDir = tmpCacheDir
+	svc.crdsDevBaseURL = server.URL
+
+	ctx := context.Background()
+	dummyClaim, err := svc.GenerateDummyClaim(ctx, "database.aws.upbound.io", "v1alpha1", "CompositeThing")
+	assert.NoError(t, err)
+	assert.Contains(t, dummyClaim, "apiVersion: database.aws.upbound.io/v1alpha1")
+	assert.Contains(t, dummyClaim, "kind: CompositeThing")
+	assert.Contains(t, dummyClaim, "requiredField: \"string\"")
+	assert.Contains(t, dummyClaim, "# optionalField: 0")
+	assert.Contains(t, dummyClaim, "# An optional integer field")
+}
+

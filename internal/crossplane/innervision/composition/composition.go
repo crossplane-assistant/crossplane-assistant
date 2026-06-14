@@ -27,6 +27,12 @@ type Service struct {
 // List returns all the compositions installed in the cluster
 func (s *Service) List(ctx context.Context) (*v1.CompositionList, error) {
 	compositions, err := s.compositionClient.List(ctx, metav1.ListOptions{})
+	if err == nil && compositions != nil {
+		for i := range compositions.Items {
+			compositions.Items[i].APIVersion = "apiextensions.crossplane.io/v1"
+			compositions.Items[i].Kind = "Composition"
+		}
+	}
 	return compositions, err
 }
 
@@ -35,6 +41,10 @@ func (s *Service) List(ctx context.Context) (*v1.CompositionList, error) {
 func (s *Service) Get(ctx context.Context, name string) (*v1.Composition, error) {
 
 	composition, err := s.compositionClient.Get(ctx, name, metav1.GetOptions{})
+	if err == nil && composition != nil {
+		composition.APIVersion = "apiextensions.crossplane.io/v1"
+		composition.Kind = "Composition"
+	}
 	return composition, err
 }
 

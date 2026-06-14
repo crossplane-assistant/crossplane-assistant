@@ -35,6 +35,21 @@ export const CompositionTreeNav: React.FC<TreeNavProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-6">
+        {/* 🧪 SANDBOX PLAYPEN */}
+        <div className="space-y-1">
+          <button
+            onClick={() => onSelect('sandbox')}
+            className={`w-full flex items-center gap-2 px-2.5 py-2 text-xs font-bold rounded-lg text-left transition-all border ${
+              isSelected('sandbox')
+                ? 'bg-blue-100 text-blue-800 border-blue-300 shadow-2xs font-bold'
+                : 'text-blue-700 bg-blue-50/50 border-blue-100 hover:bg-blue-50 hover:text-blue-800'
+            }`}
+          >
+            <span className="flex-shrink-0 text-sm">🧪</span>
+            <span className="truncate">Sandbox Playpen</span>
+          </button>
+        </div>
+
         {/* ⚙️ PIPELINE / BLUEPRINT SECTION */}
         <div className="space-y-2">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 flex items-center gap-1">

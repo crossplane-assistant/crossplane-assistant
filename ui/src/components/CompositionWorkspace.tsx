@@ -26,6 +26,18 @@ export const CompositionWorkspace: React.FC = () => {
 
   const [isGraphCollapsed, setIsGraphCollapsed] = React.useState(!!selected);
 
+  const [sandboxClaimYaml, setSandboxClaimYaml] = React.useState<string>('');
+  const [sandboxCompYaml, setSandboxCompYaml] = React.useState<string>('');
+  const [sandboxActiveTab, setSandboxActiveTab] = React.useState<'claim' | 'composition'>('claim');
+  const [isRendering, setIsRendering] = React.useState<boolean>(false);
+  const [renderResult, setRenderResult] = React.useState<{
+    cli_available: boolean;
+    stdout?: string;
+    stderr?: string;
+    error?: string;
+  } | null>(null);
+  const [sandboxError, setSandboxError] = React.useState<string>('');
+
   // Auto-collapse graph when selection changes (from empty to selected)
   React.useEffect(() => {
     if (selected) {
@@ -36,6 +48,73 @@ export const CompositionWorkspace: React.FC = () => {
   }, [selected]);
 
   const { data: composition, isLoading, error } = useComposition(name);
+
+  React.useEffect(() => {
+    if (selected === 'sandbox' && composition) {
+      // Set initial composition YAML if empty
+      if (!sandboxCompYaml) {
+        setSandboxCompYaml(stringify(composition));
+      }
+
+      // Fetch dummy claim if empty
+      if (!sandboxClaimYaml) {
+        const apiVersion = composition.spec?.compositeTypeRef?.apiVersion || '';
+        const parts = apiVersion.split('/');
+        const group = parts.length > 1 ? parts[0] : '';
+        const version = parts.length > 1 ? parts[1] : parts[0];
+        const kind = composition.spec?.compositeTypeRef?.kind || '';
+
+        if (version && kind) {
+          setIsRendering(true);
+          fetch(`/crossplane/sandbox/dummy-claim?group=${encodeURIComponent(group)}&version=${encodeURIComponent(version)}&kind=${encodeURIComponent(kind)}`)
+            .then((res) => {
+              if (!res.ok) {
+                throw new Error(`Failed to generate dummy claim: HTTP ${res.status}`);
+              }
+              return res.text();
+            })
+            .then((text) => {
+              setSandboxClaimYaml(text);
+              setIsRendering(false);
+            })
+            .catch((err) => {
+              console.error(err);
+              setSandboxError(err.message || 'Failed to fetch dummy claim');
+              setIsRendering(false);
+            });
+        }
+      }
+    }
+  }, [selected, composition, sandboxCompYaml, sandboxClaimYaml]);
+
+  const handleRender = async () => {
+    setIsRendering(true);
+    setSandboxError('');
+    setRenderResult(null);
+    try {
+      const response = await fetch('/crossplane/sandbox/render', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          claim: sandboxClaimYaml,
+          composition: sandboxCompYaml,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error(`Server returned HTTP ${response.status}`);
+      }
+      const data = await response.json();
+      setRenderResult(data);
+    } catch (err: any) {
+      console.error(err);
+      setSandboxError(err.message || 'An unexpected error occurred during simulation.');
+    } finally {
+      setIsRendering(false);
+    }
+  };
+
   const { data: graph } = useCompositionDependencies(name);
   const { data: claims = [] } = useClaims();
 
@@ -128,6 +207,21 @@ export const CompositionWorkspace: React.FC = () => {
             <span className="px-2.5 py-1 bg-white text-xs font-semibold text-slate-600 rounded-md border shadow-2xs">🔗 Trace computed dependencies</span>
             <span className="px-2.5 py-1 bg-white text-xs font-semibold text-slate-600 rounded-md border shadow-2xs">🚀 Quick link to live Claims</span>
           </div>
+
+          <button
+            onClick={() => handleSelect('sandbox')}
+            className="mt-8 p-5 bg-blue-50/50 hover:bg-blue-50 border border-blue-200 hover:border-blue-300 rounded-2xl shadow-3xs hover:shadow-2xs transition-all flex items-start gap-4 text-left max-w-md cursor-pointer group"
+          >
+            <span className="text-2xl mt-0.5">🧪</span>
+            <div className="space-y-1">
+              <h4 className="font-bold text-sm text-blue-900 group-hover:text-blue-700">
+                Ouvrir le Bac à Sable (Dry-Run)
+              </h4>
+              <p className="text-xs text-blue-700/80 leading-relaxed">
+                Simulez instantanément le rendu de vos compositions localement sans impacter votre cluster. Testez vos Claim de manière sécurisée et diagnostiquez les erreurs de validation en direct.
+              </p>
+            </div>
+          </button>
         </div>
       );
     }
@@ -322,6 +416,190 @@ export const CompositionWorkspace: React.FC = () => {
       );
     }
 
+    if (selected === 'sandbox') {
+      return (
+        <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs animate-fadeIn">
+          {/* Header of the Sandbox */}
+          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
+                <span className="text-lg">🧪</span> Bac à Sable (Dry-Run Engine)
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Modifiez votre claim fictive et la définition de la composition pour simuler le rendu des ressources.
+              </p>
+            </div>
+            
+            {/* Simulation button */}
+            <button
+              onClick={handleRender}
+              disabled={isRendering}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs shadow-xs transition-all cursor-pointer ${
+                isRendering
+                  ? 'bg-blue-100 text-blue-400 cursor-not-allowed border border-blue-200'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 active:scale-95'
+              }`}
+            >
+              {isRendering ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-blue-400 border-t-white rounded-full animate-spin" />
+                  <span>Simulation en cours...</span>
+                </>
+              ) : (
+                <>
+                  <span>⚡ Simuler le Rendu (Dry-Run)</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Dual-column body */}
+          <div className="flex-1 flex overflow-hidden min-h-[600px] h-[650px]">
+            {/* Left Column (Inputs) */}
+            <div className="w-1/2 border-r border-slate-200 flex flex-col overflow-hidden">
+              <div className="flex border-b border-slate-200 bg-slate-50/30">
+                <button
+                  onClick={() => setSandboxActiveTab('claim')}
+                  className={`flex-1 py-3 px-4 text-xs font-bold border-b-2 transition-all ${
+                    sandboxActiveTab === 'claim'
+                      ? 'border-blue-600 text-blue-700 bg-white'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
+                  }`}
+                >
+                  📄 Dummy Claim
+                </button>
+                <button
+                  onClick={() => setSandboxActiveTab('composition')}
+                  className={`flex-1 py-3 px-4 text-xs font-bold border-b-2 transition-all ${
+                    sandboxActiveTab === 'composition'
+                      ? 'border-blue-600 text-blue-700 bg-white'
+                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
+                  }`}
+                >
+                  🛠️ Composition YAML
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-hidden relative bg-white">
+                {sandboxActiveTab === 'claim' ? (
+                  <MonacoEditor
+                    height="100%"
+                    language="yaml"
+                    theme="vs-light"
+                    value={sandboxClaimYaml}
+                    onChange={(val) => setSandboxClaimYaml(val || '')}
+                    options={{ minimap: { enabled: false }, automaticLayout: true }}
+                  />
+                ) : (
+                  <MonacoEditor
+                    height="100%"
+                    language="yaml"
+                    theme="vs-light"
+                    value={sandboxCompYaml}
+                    onChange={(val) => setSandboxCompYaml(val || '')}
+                    options={{ minimap: { enabled: false }, automaticLayout: true }}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Right Column (Outputs) */}
+            <div className="w-1/2 flex flex-col overflow-hidden bg-slate-50/30">
+              <div className="p-3 border-b border-slate-200 bg-slate-50/80 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  📤 Ressources Générées
+                </span>
+                {renderResult?.cli_available && (
+                  <span className="text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-md">
+                    CLI Available
+                  </span>
+                )}
+              </div>
+
+              <div className="flex-1 flex flex-col overflow-y-auto p-4 space-y-4">
+                {sandboxError && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-medium space-y-1">
+                    <p className="font-bold">HTTP Error</p>
+                    <p>{sandboxError}</p>
+                  </div>
+                )}
+
+                {/* If CLI is NOT available, or error field in response */}
+                {renderResult && (!renderResult.cli_available || renderResult.error) && (
+                  <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl space-y-4 shadow-3xs">
+                    <div className="flex gap-2.5 items-start">
+                      <span className="text-2xl">⚠️</span>
+                      <div className="space-y-1">
+                        <h4 className="font-bold text-sm text-amber-900">
+                          Crossplane CLI non détecté ou requis
+                        </h4>
+                        <p className="text-xs text-amber-700 leading-relaxed">
+                          {renderResult.error || "L'assistant nécessite le binaire CLI `crossplane` officiel pour simuler le rendu des ressources localement via la commande `crossplane beta render`."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-amber-150 space-y-2">
+                      <h5 className="text-xs font-bold text-amber-800">Comment installer le CLI Crossplane :</h5>
+                      <div className="bg-amber-900/10 p-3 rounded-lg font-mono text-[11px] text-amber-900 leading-relaxed whitespace-pre-wrap">
+{`# Télécharger et installer le binaire officiel
+curl -sL https://cli.crossplane.io/install.sh | sh
+sudo mv crossplane /usr/local/bin/
+
+# Vérifier l'installation
+crossplane version`}
+                      </div>
+                      <p className="text-[10px] text-amber-600">
+                        Pour en savoir plus, consultez la <a href="https://docs.crossplane.io/latest/cli/" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-amber-800">documentation officielle Crossplane CLI</a>.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Render Stderr/Diagnostics panel if any warnings or syntax errors */}
+                {renderResult?.stderr && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl overflow-hidden">
+                    <div className="px-4 py-2.5 bg-red-100/50 border-b border-red-150 flex items-center justify-between">
+                      <span className="text-xs font-bold text-red-800 flex items-center gap-1.5">
+                        🚨 Diagnostics / Erreurs de validation
+                      </span>
+                    </div>
+                    <pre className="p-4 font-mono text-[11px] text-red-700 overflow-x-auto whitespace-pre-wrap bg-white leading-relaxed">
+                      {renderResult.stderr}
+                    </pre>
+                  </div>
+                )}
+
+                {/* Output Editor Container */}
+                {renderResult?.cli_available && !renderResult.error && (
+                  <div className="flex-1 min-h-[300px] border border-slate-200 rounded-xl overflow-hidden bg-white shadow-inner">
+                    <MonacoEditor
+                      height="100%"
+                      language="yaml"
+                      theme="vs-light"
+                      value={renderResult.stdout || ''}
+                      options={{ readOnly: true, minimap: { enabled: false }, automaticLayout: true }}
+                    />
+                  </div>
+                )}
+
+                {/* Initial Instruction State if no simulation run yet */}
+                {!renderResult && !sandboxError && !isRendering && (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border border-dashed border-slate-250 rounded-2xl my-4 min-h-[300px]">
+                    <span className="text-3xl mb-2">⚡</span>
+                    <h4 className="font-bold text-slate-700 text-sm">Prêt pour la Simulation</h4>
+                    <p className="text-xs text-slate-500 max-w-xs mt-1 leading-relaxed">
+                      Cliquez sur le bouton "Simuler le Rendu (Dry-Run)" ci-dessus pour exécuter le moteur de rendu Crossplane localement.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return null;
   };
 
@@ -351,6 +629,17 @@ export const CompositionWorkspace: React.FC = () => {
             )}
           </div>
         </div>
+
+        <button
+          onClick={() => handleSelect('sandbox')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-extrabold rounded-lg border transition-all cursor-pointer ${
+            selected === 'sandbox'
+              ? 'bg-blue-600 text-white border-blue-700 shadow-xs'
+              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs hover:text-slate-900'
+          }`}
+        >
+          <span>🧪 Bac à Sable</span>
+        </button>
       </div>
 
       {/* Main Workspace Workspace Splits */}
