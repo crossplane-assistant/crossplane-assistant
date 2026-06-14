@@ -1,6 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Library, Link2, Boxes, Server, Box, Cpu, Activity, Layers, CheckCircle2 } from 'lucide-react';
 import { ListCompositions } from './components/ListCompositions';
 import { ListClaims } from './components/ListClaims';
@@ -17,6 +17,7 @@ import { useXrds } from './queries/useXrdQueries';
 import { useProviders } from './queries/useProviderQueries';
 import { useFunctions } from './queries/useFunctionQueries';
 import { useManagedResourceKinds } from './queries/useManagedResourceQueries';
+import { isResourceHealthy } from './utils/health';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +31,14 @@ const queryClient = new QueryClient({
 // Sidebar layout wrapper
 const ExplorerLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const { data: claims, isLoading: claimsLoading } = useClaims();
+  const { data: compositions, isLoading: compositionsLoading } = useCompositions();
+  const { data: xrds, isLoading: xrdsLoading } = useXrds();
+  const { data: providers, isLoading: providersLoading } = useProviders();
+  const { data: functions, isLoading: functionsLoading } = useFunctions();
+  const { data: mrKinds, isLoading: mrKindsLoading } = useManagedResourceKinds();
 
   const menuItems = [
     { path: '/explore/claims', label: 'Claim', icon: Library, title: 'Claim' },
@@ -39,6 +48,96 @@ const ExplorerLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
     { path: '/explore/providers', label: 'Provider', icon: Box, title: 'Provider' },
     { path: '/explore/functions', label: 'Function', icon: Cpu, title: 'Function' },
   ];
+
+  const renderBadge = (path: string) => {
+    let isLoading = false;
+    let total = 0;
+    let ready = 0;
+    let hasHealth = false;
+    let critical = false;
+
+    switch (path) {
+      case '/explore/claims':
+        isLoading = claimsLoading;
+        total = claims?.length || 0;
+        ready = claims?.filter(isResourceHealthy).length || 0;
+        hasHealth = true;
+        break;
+      case '/explore/compositions':
+        isLoading = compositionsLoading;
+        total = compositions?.length || 0;
+        ready = total;
+        break;
+      case '/explore/managed-resources':
+        isLoading = mrKindsLoading;
+        total = mrKinds?.length || 0;
+        ready = total;
+        break;
+      case '/explore/xrds':
+        isLoading = xrdsLoading;
+        total = xrds?.length || 0;
+        ready = xrds?.filter(isResourceHealthy).length || 0;
+        hasHealth = true;
+        break;
+      case '/explore/providers':
+        isLoading = providersLoading;
+        total = providers?.length || 0;
+        ready = providers?.filter(isResourceHealthy).length || 0;
+        hasHealth = true;
+        critical = true;
+        break;
+      case '/explore/functions':
+        isLoading = functionsLoading;
+        total = functions?.length || 0;
+        ready = total;
+        break;
+      default:
+        return null;
+    }
+
+    if (isLoading) {
+      return (
+        <span className="ml-auto w-8 h-5 bg-slate-800/80 animate-pulse rounded-full flex-shrink-0" />
+      );
+    }
+
+    if (total === 0) return null;
+
+    if (hasHealth) {
+      const isHealthy = ready === total;
+      if (isHealthy) {
+        return (
+          <span className="ml-auto px-2 py-0.5 text-xs font-mono font-bold rounded-full bg-slate-800 text-slate-400 group-hover:bg-slate-700 group-hover:text-slate-200 transition-all flex-shrink-0">
+            {total}
+          </span>
+        );
+      } else {
+        const badgeColorClass = critical
+          ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 shadow-[0_0_8px_rgba(239,68,68,0.25)]'
+          : 'bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.25)]';
+        
+        return (
+          <span
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate(`${path}?status=unready`);
+            }}
+            className={`ml-auto px-2 py-0.5 text-xs font-mono font-bold rounded-full animate-pulse cursor-pointer flex-shrink-0 hover:scale-105 transition-all ${badgeColorClass}`}
+            title="Cliquez pour filtrer les ressources en anomalie"
+          >
+            {ready}/{total} {critical ? '🔴' : '⚠️'}
+          </span>
+        );
+      }
+    }
+
+    return (
+      <span className="ml-auto px-2 py-0.5 text-xs font-mono font-bold rounded-full bg-slate-800 text-slate-400 group-hover:bg-slate-700 group-hover:text-slate-200 transition-all flex-shrink-0">
+        {total}
+      </span>
+    );
+  };
 
   return (
     <div className="flex h-screen w-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
@@ -60,14 +159,17 @@ const ExplorerLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =
                 key={item.path}
                 to={item.path}
                 title={item.title}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center justify-between gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all group ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                 }`}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                {item.label}
+                <div className="flex items-center gap-3">
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  {item.label}
+                </div>
+                {renderBadge(item.path)}
               </Link>
             );
           })}

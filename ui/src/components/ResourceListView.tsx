@@ -8,6 +8,7 @@ import { ResourceRelations } from './ResourceRelations';
 import { SchemaBrowser } from './SchemaBrowser';
 import { EcosystemCatalog } from './EcosystemCatalog';
 import type { EcosystemItem } from '../utils/ecosystemCatalog';
+import { isResourceHealthy } from '../utils/health';
 
 export interface Column<T> {
   header: string;
@@ -59,8 +60,9 @@ export function ResourceListView<T>({
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [createYamlValue, setCreateYamlValue] = useState<string>('');
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryName = searchParams.get('name');
+  const queryStatus = searchParams.get('status');
 
   // Auto-select drawer item if name parameter is provided in query string
   useEffect(() => {
@@ -110,9 +112,15 @@ export function ResourceListView<T>({
   }
 
   const safeData = data || [];
+  
+  // Apply unready status filter first if requested
+  const processedData = queryStatus === 'unready'
+    ? safeData.filter((item) => !isResourceHealthy(item))
+    : safeData;
+
   const filteredData = filterFn
-    ? safeData.filter((item) => filterFn(item, searchTerm))
-    : safeData.filter((item) => {
+    ? processedData.filter((item) => filterFn(item, searchTerm))
+    : processedData.filter((item) => {
         const name = getRowName(item).toLowerCase();
         return name.includes(searchTerm.toLowerCase());
       });
@@ -153,6 +161,31 @@ export function ResourceListView<T>({
           </button>
         ))}
       </div>
+
+      {/* Cyberpunk warning active filter banner */}
+      {queryStatus === 'unready' && (
+        <div className="flex items-center justify-between p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-900 shadow-sm animate-fadeIn">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-2.5 w-2.5 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
+            </span>
+            <span className="text-sm font-medium">
+              Filtre actif : <strong className="font-bold">Ressources en anomalie</strong> (affiche uniquement les éléments non sains)
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              const newParams = new URLSearchParams(searchParams);
+              newParams.delete('status');
+              setSearchParams(newParams);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/20 text-amber-800 cursor-pointer transition-all hover:scale-[1.02]"
+          >
+            <X className="w-3.5 h-3.5" /> Réinitialiser le filtre
+          </button>
+        </div>
+      )}
 
       {/* Tabs / Filter and Table container */}
       {ecosystemCategory ? (
