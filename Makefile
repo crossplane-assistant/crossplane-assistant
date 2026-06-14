@@ -51,7 +51,7 @@ dev: ## Run in development mode (React/Vite dev server + Go API with CORS)
 	@echo "Backend API: http://localhost:8080"
 	@echo "Press Ctrl+C to stop both servers"
 	@trap 'kill 0' SIGINT; \
-	cd $(MKFILE_PATH)/ui && npm install --legacy-peer-deps && npm run dev & \
+	cd $(MKFILE_PATH)/ui && npm install && npm run dev & \
 	go run -tags dev . & \
 	wait
 

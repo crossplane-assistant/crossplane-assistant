@@ -12,6 +12,7 @@ Now that React 19 is fully stable and the library ecosystem has caught up, we ca
 - Transition the `ui` project's dependencies to stable, officially supported versions of React 19 and its matching type declarations.
 - Upgrade `lucide-react` to a modern version (e.g. `^1.18.0`) that natively supports React 19 in its `peerDependencies`.
 - Eradicate the use of `--legacy-peer-deps` or `--force` during installation.
+- Clean up workspace automation scripts, specifically removing `--legacy-peer-deps` from the root `Makefile`'s `dev` target.
 - Verify that the frontend continues to build and compile cleanly.
 - Ensure all existing unit tests in `ui/tests/` execute and pass without regressions.
 

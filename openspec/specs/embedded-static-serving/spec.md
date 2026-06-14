@@ -1,9 +1,7 @@
 ## Purpose
 
 This capability enables the application to embed frontend static assets directly into the Go binary at build time, eliminating the need for separate file serving infrastructure.
-
 ## Requirements
-
 ### Requirement: Binary embeds Angular build artifacts
 
 The system SHALL embed the compiled Angular application assets into the Go binary at build time using Go's embed.FS package.
@@ -43,3 +41,11 @@ The system SHALL set appropriate cache headers for static assets to enable brows
 #### Scenario: HTML files not cached
 - **WHEN** client requests index.html
 - **THEN** system sets no-cache headers to ensure latest version is always served
+
+### Requirement: Deterministic Production Builds
+The build environment SHALL be capable of executing deterministic clean installations using standard CI commands.
+
+#### Scenario: Clean installation in CI
+- **WHEN** `npm ci` is executed in the `ui` directory
+- **THEN** npm installs all dependencies strictly matching the lockfile with zero resolution errors
+

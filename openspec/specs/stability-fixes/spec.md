@@ -2,9 +2,7 @@
 
 ## Purpose
 TBD - created by syncing change ux-and-stability-improvements. Update Purpose after archive.
-
 ## Requirements
-
 ### Requirement: Safe Event Array Parsing
 The `useEvents` hook SHALL parse the `/events/:ref` API response and return its `items` array or a fallback empty array, ensuring that the returned type is always a safe iterable array of events.
 
@@ -45,3 +43,11 @@ The Compositions list details sliding drawer SHALL support dismissal mechanisms 
 #### Scenario: Closing Compositions drawer via Escape key
 - **WHEN** the user presses the Escape key on the keyboard
 - **THEN** the Compositions detail drawer closes and state is reset to null
+
+### Requirement: Standard Dependency Resolution
+The UI project's dependencies SHALL resolve cleanly using standard npm installation commands without requiring any legacy compatibility flags.
+
+#### Scenario: Clean standard npm install
+- **WHEN** standard `npm install` is executed in the `ui` directory
+- **THEN** npm resolves and installs all peer dependencies successfully with zero ERESOLVE errors
+

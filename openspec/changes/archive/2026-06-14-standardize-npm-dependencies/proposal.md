@@ -9,6 +9,7 @@ Using `--legacy-peer-deps` completely disables npm's built-in dependency safety 
 - **Stable React 19 Upgrade**: Upgrade `react` and `react-dom` (and their respective `@types`) from React 19 Release Candidate (`^19.0.0-rc.0`) to the official stable version of React 19 (`^19.0.0`).
 - **Standard Dependency Alignment**: Upgrade `lucide-react` to its latest stable version (`^1.18.0`) which declares official compatibility with React 19.
 - **Strict Dependency Resolution**: Ensure that `npm install` executes successfully without flags, ensuring a clean and warning-free resolution tree.
+- **Tooling and Script Cleanup**: Remove the hardcoded `--legacy-peer-deps` flag from the `Makefile`'s `dev` target, transitioning it to a standard `npm install`.
 - **Build and Test Validation**: Validate that the UI codebase continues to compile and all tests pass with the updated dependencies.
 
 ## Capabilities
@@ -20,4 +21,5 @@ Using `--legacy-peer-deps` completely disables npm's built-in dependency safety 
 ## Impact
 
 - **UI Dependencies**: Modifies `ui/package.json` and updates `ui/package-lock.json`.
+- **Project Tooling (Makefile)**: Modifies the `dev` target in the root `Makefile` to use standard `npm install` instead of `npm install --legacy-peer-deps`.
 - **No Functional Logic Changes**: This change is purely structural and dependency-focused. It guarantees that the visual application components remain unaffected while utilizing standard dependencies.
