@@ -1,6 +1,7 @@
 import React from 'react';
 import { useProviders, useDeleteProvider } from '../queries/useProviderQueries';
 import { ResourceListView } from './ResourceListView';
+import { getPackageVersion } from '../utils/package';
 
 const PROVIDER_TEMPLATE = `apiVersion: pkg.crossplane.io/v1
 kind: Provider
@@ -24,6 +25,17 @@ export const ListProviders: React.FC = () => {
     {
       header: 'Name',
       render: (p: any) => <span className="font-semibold text-blue-600 font-mono">{p.metadata?.name}</span>,
+    },
+    {
+      header: 'Version',
+      render: (p: any) => {
+        const version = getPackageVersion(p.spec?.package);
+        return (
+          <span className="font-mono text-xs bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded">
+            {version}
+          </span>
+        );
+      },
     },
     {
       header: 'Healthy',

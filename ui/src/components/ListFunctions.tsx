@@ -1,6 +1,7 @@
 import React from 'react';
 import { useFunctions, useDeleteFunction } from '../queries/useFunctionQueries';
 import { ResourceListView } from './ResourceListView';
+import { getPackageVersion } from '../utils/package';
 
 const FUNCTION_TEMPLATE = `apiVersion: pkg.crossplane.io/v1
 kind: Function
@@ -24,6 +25,17 @@ export const ListFunctions: React.FC = () => {
     {
       header: 'Name',
       render: (f: any) => <span className="font-semibold text-blue-600 font-mono">{f.metadata?.name}</span>,
+    },
+    {
+      header: 'Version',
+      render: (f: any) => {
+        const version = getPackageVersion(f.spec?.package);
+        return (
+          <span className="font-mono text-xs bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded">
+            {version}
+          </span>
+        );
+      },
     },
     {
       header: 'Healthy',
