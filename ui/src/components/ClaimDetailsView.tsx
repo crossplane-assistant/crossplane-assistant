@@ -4,14 +4,15 @@ import * as Tabs from '@radix-ui/react-tabs';
 import MonacoEditor from '@monaco-editor/react';
 import { stringify } from 'yaml';
 import { decodeRef, Ref, ClaimTreeNode } from '../types';
-import { useClaim, useClaimTree } from '../queries/useClaimQueries';
+import { useClaim, useClaimTree, useClaimDiagnostics } from '../queries/useClaimQueries';
 import { useCompositionRevision } from '../queries/useCompositionQueries';
 import { useEvents } from '../queries/useEventQueries';
 import { ClaimGraph } from './ClaimGraph';
 import { ClaimGanttTimeline } from './ClaimGanttTimeline';
+import { ClaimDiagnosticsHub } from './ClaimDiagnosticsHub';
 import { ClaimEventsList } from './ClaimEventsList';
 import { ResourceRelations } from './ResourceRelations';
-import { X, Library, FileText, LayoutTemplate, Activity, ChevronRight, Link2, Network, Clock } from 'lucide-react';
+import { X, Library, FileText, LayoutTemplate, Activity, ChevronRight, Link2, Network, Clock, Terminal } from 'lucide-react';
 
 function cleanManifest(manifest: any): any {
   if (!manifest) return {};
@@ -22,6 +23,37 @@ function cleanManifest(manifest: any): any {
   return copy;
 }
 
+const ClaimDiagnosticsLogs: React.FC<{ claimRef: Ref | undefined, resourceName: string }> = ({ claimRef, resourceName }) => {
+  const { data, isLoading } = useClaimDiagnostics(claimRef);
+  if (isLoading) {
+    return <div className="text-xs text-slate-400 animate-pulse py-4">Loading live provider logs...</div>;
+  }
+  const logObj = data?.logs?.find((l: any) => l.resourceName === resourceName);
+  
+  if (!logObj || !logObj.lines || logObj.lines.length === 0) {
+    return (
+      <div className="p-4 bg-slate-950 border border-slate-900 rounded-lg text-slate-400 italic text-[11px] font-mono leading-relaxed">
+        No active correlated provider logs found for this resource.
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-slate-950 border border-slate-900 rounded-lg p-4 font-mono text-[11px] text-emerald-400 overflow-y-auto max-h-[360px] leading-relaxed custom-terminal-scroll">
+      {logObj.lines.map((line: string, idx: number) => {
+        const isError = line.toLowerCase().includes('err') || line.toLowerCase().includes('fail');
+        const isWarning = line.toLowerCase().includes('warn') || line.toLowerCase().includes('timeout');
+        return (
+          <div key={idx} className={isError ? 'text-red-400 font-bold' : isWarning ? 'text-amber-400' : ''}>
+            <span className="text-slate-500 mr-2 select-none">{(idx + 1).toString().padStart(3, '0')} |</span>
+            {line}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 export const ClaimDetailsView: React.FC = () => {
   const { ref: encodedRef } = useParams<{ ref: string }>();
   const [ref, setRef] = useState<Ref | undefined>(undefined);
@@ -30,7 +62,7 @@ export const ClaimDetailsView: React.FC = () => {
   const [selectedNode, setSelectedNode] = useState<ClaimTreeNode | null>(null);
   const [selectedNodeTemplate, setSelectedNodeTemplate] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<string>('manifest');
-  const [viewMode, setViewMode] = useState<'graph' | 'timeline'>('graph');
+  const [viewMode, setViewMode] = useState<'graph' | 'timeline' | 'diagnostics'>('graph');
 
   // Decode the reference parameter
   useEffect(() => {
@@ -206,6 +238,16 @@ export const ClaimDetailsView: React.FC = () => {
         >
           <Clock className="w-4 h-4" /> Timeline View
         </button>
+        <button
+          onClick={() => setViewMode('diagnostics')}
+          className={`flex items-center gap-2 px-5 py-3 border-b-2 font-bold text-xs uppercase tracking-wider transition-all cursor-pointer ${
+            viewMode === 'diagnostics'
+              ? 'border-blue-500 text-blue-600 font-extrabold bg-blue-50/10'
+              : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'
+          }`}
+        >
+          <Activity className="w-4 h-4" /> Diagnostic Hub
+        </button>
       </div>
 
       {/* Tree Visualization */}
@@ -220,8 +262,10 @@ export const ClaimDetailsView: React.FC = () => {
             onRefresh={handleRefresh}
             reloadInSeconds={15}
           />
-        ) : (
+        ) : viewMode === 'timeline' ? (
           <ClaimGanttTimeline root={tree.root} />
+        ) : (
+          <ClaimDiagnosticsHub claimRef={ref} />
         )
       ) : (
         <div className="p-8 text-center text-slate-400 italic bg-white border border-slate-200 rounded-xl shadow-sm">
@@ -291,6 +335,14 @@ export const ClaimDetailsView: React.FC = () => {
               >
                 <Link2 className="w-4 h-4" /> Relations
               </Tabs.Trigger>
+              {(selectedNode.metaKind === 'Resource' || selectedNode.metaKind === 'Object') && (
+                <Tabs.Trigger
+                  value="diagnostics"
+                  className="py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 flex items-center gap-1.5 focus:outline-none cursor-pointer transition-colors"
+                >
+                  <Terminal className="w-4 h-4" /> Diagnostic Logs
+                </Tabs.Trigger>
+              )}
             </Tabs.List>
 
             {/* Tab Content Panel Container */}
@@ -330,6 +382,14 @@ export const ClaimDetailsView: React.FC = () => {
                 <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Resource Relations</div>
                 <ResourceRelations resource={selectedNode.manifest || {}} />
               </Tabs.Content>
+
+              {/* Diagnostics Tab */}
+              {(selectedNode.metaKind === 'Resource' || selectedNode.metaKind === 'Object') && (
+                <Tabs.Content value="diagnostics" className="animate-fadeIn">
+                  <div className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Live Correlated Logs</div>
+                  <ClaimDiagnosticsLogs claimRef={ref} resourceName={selectedNode.name} />
+                </Tabs.Content>
+              )}
             </div>
           </Tabs.Root>
         </div>

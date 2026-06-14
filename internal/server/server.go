@@ -13,6 +13,7 @@ import (
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/client"
 	k8sv1alpha1 "github.com/ldassonville/crossplane-assistant/internal/crossplane/client/kubernetes/v1alpha1"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/claim"
+	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/diagnostic"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/composition"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/compositionrevision"
 	"github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/event"
@@ -107,6 +108,10 @@ func (a *ApiServer) Start(staticFS fs.FS) error {
 	a.e.Handle("POST", "/crossplane/claims", claimHandler.Create)
 	a.e.Handle("PUT", "/crossplane/claims/:name", claimHandler.Update)
 	a.e.Handle("DELETE", "/crossplane/claims/:ref", claimHandler.Delete)
+
+	diagnosticService := diagnostic.NewService(k8sClient, claimService, eventServices, crdRegistry, providerRevisionRegistry)
+	diagnosticHandler := diagnostic.NewHandler(diagnosticService)
+	a.e.Handle("GET", "/crossplane/claims/:ref/diagnostics", diagnosticHandler.GetClaimDiagnostics)
 
 	compositionRevisionService := compositionrevision.NewService(compositionRevisionClient)
 	compositionRevisionHandler := compositionrevision.NewHandler(compositionRevisionService)

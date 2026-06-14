@@ -58,3 +58,18 @@ export function useClaimTree(ref: Ref | undefined) {
     refetchInterval: 15000,
   });
 }
+
+export function useClaimDiagnostics(ref: Ref | undefined) {
+  return useQuery<any>({
+    queryKey: ['claim-diagnostics', ref],
+    queryFn: async () => {
+      if (!ref) throw new Error('Ref is required');
+      const encoded = encodeRef(ref);
+      const res = await fetch(`${API_BASE}/${encoded}/diagnostics`);
+      if (!res.ok) throw new Error(`Claim diagnostics fetch failed: ${res.statusText}`);
+      return res.json();
+    },
+    enabled: !!ref,
+    refetchInterval: 10000,
+  });
+}
