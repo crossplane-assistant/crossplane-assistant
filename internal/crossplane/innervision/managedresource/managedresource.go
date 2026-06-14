@@ -66,18 +66,22 @@ func (s *Service) ListKind(ctx context.Context) ([]MRKind, error) {
 	for _, revision := range revisions {
 
 		for _, obj := range revision.GetObjects() {
-			if obj.Kind == "CustomResourceDefinition" {
+			if obj.Kind == "CustomResourceDefinition" || obj.Kind == "ManagedResourceDefinition" {
 				// Get the CRD
 				crd, err := s.crdRegistry.Get(obj.Name)
 				if err != nil {
 					log.Err(err).Msg("Error while getting CRD")
 					continue
 				}
+				if crd == nil {
+					continue
+				}
 
 				if crd.Spec.Names.Kind == "ProviderConfig" ||
 					crd.Spec.Names.Kind == "ProviderRevision" ||
 					crd.Spec.Names.Kind == "ProviderConfigUsage" ||
-					crd.Spec.Names.Kind == "ProviderConfigRevision" {
+					crd.Spec.Names.Kind == "ProviderConfigRevision" ||
+					crd.Spec.Names.Kind == "ClusterProviderConfig" {
 					continue
 				}
 				/*
