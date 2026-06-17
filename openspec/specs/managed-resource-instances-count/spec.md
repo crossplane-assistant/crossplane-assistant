@@ -18,9 +18,9 @@ The frontend sidebar explorer navigation badge for Managed Resources SHALL show 
 - **THEN** the sidebar displays a badge with total count `4` and a warning status showing `3/4` ready instances
 
 ### Requirement: Dropdown Option labels showing Active Counts
-The Managed Resources list view category selection dropdown options SHALL display the total active instances and readiness counts inline next to each kind name.
+The Managed Resources list view shall replace the category selection dropdown with a Split-Pane Kinds Explorer sidebar. The sidebar SHALL display the total active instances and readiness counts inline next to each kind name in the list.
 
-#### Scenario: Viewing the dropdown list options
-- **WHEN** the user opens the category selection dropdown
-- **THEN** options with active instances show labels like `Topic (3 active, 2/3 ready)` or `Object (1 active, 1/1 ready)`, while empty kinds show `Bucket (0 active)`
+#### Scenario: Viewing the Kinds Explorer sidebar list
+- **WHEN** the user browses the Kinds Explorer sidebar
+- **THEN** kinds with active instances show labels/badges like `Topic (3 active, 2/3 ready)` or `Object (1 active, 1/1 ready)`, while empty kinds show `Bucket (0 active)`
 
