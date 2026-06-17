@@ -11,6 +11,7 @@ export function useManagedResourceKinds() {
       if (!res.ok) throw new Error(`Managed resource kinds fetch failed: ${res.statusText}`);
       return res.json();
     },
+    refetchInterval: 10000,
   });
 }
 

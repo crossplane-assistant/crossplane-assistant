@@ -12,8 +12,15 @@ The backend SHALL maintain a background process to pre-warm and periodically ref
 
 #### Scenario: Service Initialization
 - **WHEN** the `managedresource` service is instantiated
-- **THEN** a background goroutine is immediately spawned to populate the initial cache.
+- **THEN** a background goroutine is spawned to populate the initial cache after a proactive 2-second delay, allowing local registry caches to synchronize.
 
 #### Scenario: Stale Cache Trigger
 - **WHEN** a request arrives and the current cache is older than the configured TTL (e.g., 30 seconds)
 - **THEN** the request is served immediately from the stale cache AND a non-blocking background task is triggered to update the cache for subsequent requests.
+
+### Requirement: Cache Auto-Healing on Empty Results
+The system SHALL prevent caching empty results if Kubernetes registries are not yet synchronized, allowing natural polling retries to fetch the real data.
+
+#### Scenario: Empty registry during sync
+- **WHEN** a background cache refresh runs and finds zero kinds (empty results)
+- **THEN** it SHALL update the cache map to prevent panics, but it MUST NOT update the lastUpdated timestamp, keeping the cache marked as stale and forcing a retry on subsequent requests.

@@ -18,6 +18,8 @@ The Crossplane Assistant UI displays counts of various managed resource kinds in
 
 - **In-Memory Cache over Distributed Cache**: We use a simple Go `sync.RWMutex` protected struct directly within the `Service` definition. A distributed cache like Redis is unnecessary overhead for an application meant to run as an embedded local cluster assistant.
 - **Background Goroutine Polling over Synchronous Fetching**: To ensure rapid response times, the HTTP handler will only ever read from the cache. If the cache is stale (e.g., last update > 30s ago), a background goroutine is triggered. This avoids penalizing the specific user request that happens to encounter an expired cache.
+- **Warmup Delay for Registry Sync**: On application startup, local Kubernetes registries (informers) require a brief window to fetch CRDs and Provider lists. We introduce a 2-second delay to the background warmup loop, preventing it from executing against empty local registries.
+- **Auto-Healing Timestamp Exclusion**: If a cache refresh run occurs when the registries are not yet ready or return 0 kinds, we store the empty result but do NOT update `lastUpdated`. This leaves the cache marked as "stale", causing subsequent frontend polls (every 5 seconds) to trigger automatic retries until the registries are synchronized and real data is returned.
 - **Test Synchronicity**: We must ensure that the unit tests are not rendered flaky by asynchronous behavior. We will add a synchronized `refreshCacheSync(ctx)` method or similar mechanism specifically invoked by `TestListKind` to ensure test assertions evaluate deterministically.
 
 ## Risks / Trade-offs

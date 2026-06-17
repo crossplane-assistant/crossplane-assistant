@@ -173,6 +173,9 @@ func TestListKind(t *testing.T) {
 		}, nil
 	}
 
+	// Synchronously populate cache for testing
+	svc.refreshCache(context.Background())
+
 	// Invoke ListKind
 	kinds, err := svc.ListKind(context.Background())
 	assert.NoError(t, err)
