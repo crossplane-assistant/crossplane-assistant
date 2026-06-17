@@ -64,18 +64,28 @@ interface CompositionGraphProps {
   composition: any;
   activeNodeId?: string;
   onSelectNode: (nodeId: string) => void;
+  maxHeight?: number;
+  zoom?: number;
 }
 
 export const CompositionGraph: React.FC<CompositionGraphProps> = ({
   composition,
   activeNodeId = '',
   onSelectNode,
+  maxHeight = 300,
+  zoom = 100,
 }) => {
   const virtualRoot = buildVirtualTree(composition);
 
   return (
-    <div className="graph-container overflow-x-auto overflow-y-auto max-w-full p-4 bg-slate-50/40 border border-slate-200 rounded-xl shadow-inner min-h-[140px] max-h-[300px]">
-      <div className="inline-block min-w-full">
+    <div 
+      className="graph-container overflow-x-auto overflow-y-auto max-w-full p-4 bg-slate-50/40 border border-slate-200 rounded-xl shadow-inner min-h-[140px]"
+      style={{ maxHeight: `${maxHeight}px` }}
+    >
+      <div 
+        className="inline-block min-w-full"
+        style={{ zoom: zoom !== 100 ? `${zoom}%` : undefined }}
+      >
         <CompositionGraphNode
           node={virtualRoot}
           isRoot={true}

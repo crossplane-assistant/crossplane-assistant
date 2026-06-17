@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, ExternalLink } from 'lucide-react';
+import { Clock, Layers, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCompositions, useDeleteComposition } from '../queries/useCompositionQueries';
 import { CompositionViewer } from './CompositionViewer';
@@ -61,6 +61,34 @@ export const ListCompositions: React.FC = () => {
         );
       },
     },
+    {
+      header: 'Workspace Access',
+      render: (comp: any) => (
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Link
+            to={`/explore/compositions/${comp.metadata?.name}`}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-all hover:scale-[1.02]"
+            title="Standard Tree View"
+          >
+            <Layers className="w-3.5 h-3.5" /> Workspace
+          </Link>
+          <Link
+            to={`/explore/compositions/${comp.metadata?.name}?view=canvas`}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all hover:scale-[1.02]"
+            title="Visual Composition Builder"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-500" /> Visual
+          </Link>
+          <Link
+            to={`/explore/compositions/${comp.metadata?.name}?selected=sandbox`}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 transition-all hover:scale-[1.02]"
+            title="Dry-Run Sandbox"
+          >
+            <span className="text-xs">🧪</span> Sandbox
+          </Link>
+        </div>
+      ),
+    },
   ];
 
   return (
@@ -81,13 +109,28 @@ export const ListCompositions: React.FC = () => {
       }}
       renderDetailView={(comp) => (
         <div className="space-y-4">
-          <div className="flex justify-end px-4 pt-2">
-            <Link
-              to={`/explore/compositions/${comp.metadata?.name}`}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all hover:shadow-md cursor-pointer border border-blue-500 hover:border-blue-600"
-            >
-              Open Workspace <ExternalLink className="w-3.5 h-3.5" />
-            </Link>
+          <div className="flex items-center justify-between px-4 pt-2 border-b border-slate-100 pb-3">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Workspace Quick Links</span>
+            <div className="flex items-center gap-2">
+              <Link
+                to={`/explore/compositions/${comp.metadata?.name}`}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow-md cursor-pointer border border-blue-500 hover:border-blue-600"
+              >
+                <Layers className="w-3.5 h-3.5" /> Tree Workspace
+              </Link>
+              <Link
+                to={`/explore/compositions/${comp.metadata?.name}?view=canvas`}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow-md cursor-pointer border border-indigo-500 hover:border-indigo-600"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-500" /> Visual Builder
+              </Link>
+              <Link
+                to={`/explore/compositions/${comp.metadata?.name}?selected=sandbox`}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow-md cursor-pointer border border-amber-500 hover:border-amber-600"
+              >
+                🧪 Dry-Run Sandbox
+              </Link>
+            </div>
           </div>
           <CompositionViewer manifest={comp} />
         </div>

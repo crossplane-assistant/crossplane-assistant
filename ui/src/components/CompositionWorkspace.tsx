@@ -29,7 +29,39 @@ export const CompositionWorkspace: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const selected = searchParams.get('selected') || '';
 
-  const [isGraphCollapsed, setIsGraphCollapsed] = React.useState(!!selected);
+  const [isGraphCollapsed, setIsGraphCollapsed] = React.useState<boolean>(() => {
+    const saved = localStorage.getItem('composition-workspace:graph-collapsed');
+    return saved !== null ? saved === 'true' : false;
+  });
+
+  const [zoom, setZoom] = React.useState<number>(() => {
+    const saved = localStorage.getItem('composition-workspace:graph-zoom');
+    return saved !== null ? parseInt(saved, 10) : 100;
+  });
+
+  const [maxHeight, setMaxHeight] = React.useState<number>(() => {
+    const saved = localStorage.getItem('composition-workspace:graph-height');
+    return saved !== null ? parseInt(saved, 10) : 400;
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('composition-workspace:graph-collapsed', String(isGraphCollapsed));
+  }, [isGraphCollapsed]);
+
+  React.useEffect(() => {
+    localStorage.setItem('composition-workspace:graph-zoom', String(zoom));
+  }, [zoom]);
+
+  React.useEffect(() => {
+    localStorage.setItem('composition-workspace:graph-height', String(maxHeight));
+  }, [maxHeight]);
+
+  const handleZoomIn = () => setZoom((prev) => Math.min(150, prev + 10));
+  const handleZoomOut = () => setZoom((prev) => Math.max(50, prev - 10));
+  const handleZoomReset = () => setZoom(100);
+
+  const handleHeightIncrease = () => setMaxHeight((prev) => Math.min(800, prev + 100));
+  const handleHeightDecrease = () => setMaxHeight((prev) => Math.max(200, prev - 100));
 
   const [sandboxClaimYaml, setSandboxClaimYaml] = React.useState<string>('');
   const [sandboxCompYaml, setSandboxCompYaml] = React.useState<string>('');
@@ -49,15 +81,6 @@ export const CompositionWorkspace: React.FC = () => {
   const [localYaml, setLocalYaml] = React.useState<string>('');
   const [selectedEdge, setSelectedEdge] = React.useState<Edge | null>(null);
   const [canvasParseError, setCanvasParseError] = React.useState<string>('');
-
-  // Auto-collapse graph when selection changes (from empty to selected)
-  React.useEffect(() => {
-    if (selected) {
-      setIsGraphCollapsed(true);
-    } else {
-      setIsGraphCollapsed(false);
-    }
-  }, [selected]);
 
   const { data: composition, isLoading, error } = useComposition(name);
 
@@ -778,21 +801,82 @@ crossplane version`}
                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                   <GitFork className="w-4 h-4 text-blue-500 animate-pulse" /> Blueprint Workflow Diagram
                 </h3>
-                <button
-                  onClick={() => setIsGraphCollapsed(!isGraphCollapsed)}
-                  className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-md font-semibold text-[10px] text-slate-600 hover:text-slate-800 transition-colors cursor-pointer shadow-xs"
-                >
-                  {isGraphCollapsed ? 'Expand Diagram ↓' : 'Collapse Diagram ↑'}
-                </button>
+                <div className="flex items-center gap-4">
+                  {/* Zoom controls */}
+                  {!isGraphCollapsed && (
+                    <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 rounded-md shadow-2xs text-[10px] font-semibold text-slate-600">
+                      <span className="text-slate-400 mr-1 select-none">Zoom :</span>
+                      <button
+                        onClick={handleZoomOut}
+                        disabled={zoom <= 50}
+                        className="px-1 hover:bg-slate-100 rounded disabled:opacity-30 cursor-pointer"
+                        title="Zoom arrière"
+                      >
+                        ➖
+                      </button>
+                      <button
+                        onClick={handleZoomReset}
+                        className="px-1 hover:bg-slate-100 rounded cursor-pointer font-mono"
+                        title="Réinitialiser zoom"
+                      >
+                        {zoom}%
+                      </button>
+                      <button
+                        onClick={handleZoomIn}
+                        disabled={zoom >= 150}
+                        className="px-1 hover:bg-slate-100 rounded disabled:opacity-30 cursor-pointer"
+                        title="Zoom avant"
+                      >
+                        ➕
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Height controls */}
+                  {!isGraphCollapsed && (
+                    <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 rounded-md shadow-2xs text-[10px] font-semibold text-slate-600">
+                      <span className="text-slate-400 mr-1 select-none">Hauteur :</span>
+                      <button
+                        onClick={handleHeightDecrease}
+                        disabled={maxHeight <= 200}
+                        className="px-1 hover:bg-slate-100 rounded disabled:opacity-30 cursor-pointer"
+                        title="Diminuer la hauteur"
+                      >
+                        ⬇️
+                      </button>
+                      <span className="font-mono">{maxHeight}px</span>
+                      <button
+                        onClick={handleHeightIncrease}
+                        disabled={maxHeight >= 800}
+                        className="px-1 hover:bg-slate-100 rounded disabled:opacity-30 cursor-pointer"
+                        title="Augmenter la hauteur"
+                      >
+                        ⬆️
+                      </button>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => setIsGraphCollapsed(!isGraphCollapsed)}
+                    className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-md font-semibold text-[10px] text-slate-600 hover:text-slate-800 transition-colors cursor-pointer shadow-xs"
+                  >
+                    {isGraphCollapsed ? 'Expand Diagram ↓' : 'Collapse Diagram ↑'}
+                  </button>
+                </div>
               </div>
               
-              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                isGraphCollapsed ? 'max-h-0 opacity-0' : 'max-h-[350px] opacity-100'
-              }`}>
+              <div 
+                className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                  isGraphCollapsed ? 'max-h-0 opacity-0' : 'opacity-100'
+                }`}
+                style={{ maxHeight: isGraphCollapsed ? '0px' : `${maxHeight + 50}px` }}
+              >
                 <CompositionGraph
                   composition={composition}
                   activeNodeId={selected}
                   onSelectNode={handleSelect}
+                  maxHeight={maxHeight}
+                  zoom={zoom}
                 />
               </div>
             </div>
