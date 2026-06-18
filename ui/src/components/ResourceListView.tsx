@@ -32,7 +32,7 @@ interface ResourceListViewProps<T> {
   headerRightArea?: React.ReactNode; // Optional dropdown/selectors in table header
   createModalTemplate?: string;       // Default YAML template content
   createModalTitle?: string;          // Modal header text (e.g. "Create PostgreSQL Claim")
-  onCreateSuccess?: (yaml: string) => void; // Success callback
+  onCreateSuccess?: (yaml: string) => Promise<void> | void; // Success callback
   ecosystemCategory?: 'provider' | 'function'; // Optional category for ecosystem catalog
 }
 
@@ -60,6 +60,16 @@ export function ResourceListView<T>({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [createYamlValue, setCreateYamlValue] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  // Clear states when opening/closing the creation modal
+  useEffect(() => {
+    if (showCreateModal) {
+      setCreateError(null);
+      setIsSubmitting(false);
+    }
+  }, [showCreateModal]);
 
   const itemKind = selectedItem ? ((selectedItem as any).kind || (selectedItem as any).base?.kind || '') : '';
   const itemApiVersion = selectedItem ? ((selectedItem as any).apiVersion || (selectedItem as any).base?.apiVersion || '') : '';
@@ -484,6 +494,11 @@ export function ResourceListView<T>({
               <p className="text-xs text-slate-500">
                 You can specify raw Kubernetes/Crossplane JSON or YAML definition below to create a {title.replace(/s$/, '')}.
               </p>
+              {createError && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium font-mono whitespace-pre-wrap overflow-auto max-h-[100px]">
+                  {createError}
+                </div>
+              )}
               <div className="h-[250px] border border-slate-200 rounded-lg overflow-hidden shadow-inner">
                 <MonacoEditor
                   height="100%"
@@ -498,22 +513,37 @@ export function ResourceListView<T>({
             <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-150">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 text-sm font-medium cursor-pointer transition-colors"
+                disabled={isSubmitting}
+                className="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 text-sm font-medium cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  if (onCreateSuccess) {
-                    onCreateSuccess(createYamlValue);
-                  } else {
-                    alert(`Created ${title.replace(/s$/, '')} successfully (Mocked)!`);
+                disabled={isSubmitting}
+                onClick={async () => {
+                  setCreateError(null);
+                  setIsSubmitting(true);
+                  try {
+                    if (onCreateSuccess) {
+                      await onCreateSuccess(createYamlValue);
+                      alert(`Created ${title.replace(/s$/, '')} successfully!`);
+                    } else {
+                      // Simulated mock behavior with small delay for realistic feel
+                      await new Promise((resolve) => setTimeout(resolve, 500));
+                      alert(`Created ${title.replace(/s$/, '')} successfully (Mocked)!`);
+                    }
+                    setShowCreateModal(false);
+                  } catch (err: any) {
+                    setCreateError(err.message || String(err));
+                  } finally {
+                    setIsSubmitting(false);
                   }
-                  setShowCreateModal(false);
                 }}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm cursor-pointer transition-colors"
+                className={`px-4 py-2 text-white rounded-lg text-sm font-medium shadow-sm cursor-pointer transition-colors ${
+                  isSubmitting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                }`}
               >
-                Create
+                {isSubmitting ? 'Creating...' : 'Create'}
               </button>
             </div>
           </div>

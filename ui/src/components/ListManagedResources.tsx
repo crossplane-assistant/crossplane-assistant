@@ -4,6 +4,7 @@ import {
   useManagedResourceKinds,
   useManagedResources,
   useDeleteManagedResource,
+  useCreateManagedResource,
 } from '../queries/useManagedResourceQueries';
 import { ResourceListView } from './ResourceListView';
 import { ManagedResourceKind } from '../types';
@@ -47,6 +48,7 @@ export const ListManagedResources: React.FC = () => {
 
   const { data: resources = [], isLoading: resourcesLoading, error: resourcesError } = useManagedResources(selectedKind);
   const deleteMutation = useDeleteManagedResource();
+  const createMutation = useCreateManagedResource();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const queryGroup = searchParams.get('group');
@@ -375,6 +377,9 @@ export const ListManagedResources: React.FC = () => {
             }}
             createModalTemplate={MR_TEMPLATE}
             createModalTitle={`Create ${selectedKind.kind}`}
+            onCreateSuccess={async (yaml) => {
+              await createMutation.mutateAsync(yaml);
+            }}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-slate-400 bg-white border border-slate-200 rounded-xl p-8 shadow-sm text-center">

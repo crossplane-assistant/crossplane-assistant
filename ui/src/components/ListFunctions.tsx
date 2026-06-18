@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFunctions, useDeleteFunction } from '../queries/useFunctionQueries';
+import { useFunctions, useDeleteFunction, useCreateFunction } from '../queries/useFunctionQueries';
 import { ResourceListView } from './ResourceListView';
 import { getPackageVersion } from '../utils/package';
 
@@ -14,6 +14,7 @@ spec:
 export const ListFunctions: React.FC = () => {
   const { data: functions = [], isLoading, error } = useFunctions();
   const deleteMutation = useDeleteFunction();
+  const createMutation = useCreateFunction();
 
   const getConditions = (f: any) => f.status?.conditions || [];
   const getStatus = (f: any, type: string) => {
@@ -77,6 +78,9 @@ export const ListFunctions: React.FC = () => {
         await deleteMutation.mutateAsync(f.metadata?.name);
       }}
       createModalTemplate={FUNCTION_TEMPLATE}
+      onCreateSuccess={async (yaml) => {
+        await createMutation.mutateAsync(yaml);
+      }}
       ecosystemCategory="function"
     />
   );

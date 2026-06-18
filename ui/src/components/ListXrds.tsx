@@ -1,5 +1,5 @@
 import React from 'react';
-import { useXrds, useDeleteXrd } from '../queries/useXrdQueries';
+import { useXrds, useDeleteXrd, useCreateXrd } from '../queries/useXrdQueries';
 import { ResourceListView } from './ResourceListView';
 
 const XRD_TEMPLATE = `apiVersion: apiextensions.crossplane.io/v1
@@ -35,6 +35,7 @@ spec:
 export const ListXrds: React.FC = () => {
   const { data: xrds = [], isLoading, error } = useXrds();
   const deleteMutation = useDeleteXrd();
+  const createMutation = useCreateXrd();
 
   const getConditions = (xrd: any) => xrd.status?.conditions || [];
   const getStatus = (xrd: any, type: string) => {
@@ -87,6 +88,9 @@ export const ListXrds: React.FC = () => {
         await deleteMutation.mutateAsync(x.metadata?.name);
       }}
       createModalTemplate={XRD_TEMPLATE}
+      onCreateSuccess={async (yaml) => {
+        await createMutation.mutateAsync(yaml);
+      }}
     />
   );
 };

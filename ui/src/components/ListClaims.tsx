@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { GitFork } from 'lucide-react';
-import { useClaims, useDeleteClaim } from '../queries/useClaimQueries';
+import { useClaims, useDeleteClaim, useCreateClaim } from '../queries/useClaimQueries';
 import { ResourceListView } from './ResourceListView';
 import { Ref, encodeRef } from '../types';
 
@@ -18,6 +18,7 @@ spec:
 export const ListClaims: React.FC = () => {
   const { data: claims = [], isLoading, error } = useClaims();
   const deleteMutation = useDeleteClaim();
+  const createMutation = useCreateClaim();
 
   const getConditions = (claim: any) => claim.status?.conditions || [];
   const getStatus = (claim: any, type: string) => {
@@ -97,6 +98,9 @@ export const ListClaims: React.FC = () => {
         await deleteMutation.mutateAsync(getRowRef(c));
       }}
       createModalTemplate={CLAIM_TEMPLATE}
+      onCreateSuccess={async (yaml) => {
+        await createMutation.mutateAsync(yaml);
+      }}
     />
   );
 };

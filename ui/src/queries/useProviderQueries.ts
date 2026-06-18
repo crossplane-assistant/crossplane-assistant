@@ -26,3 +26,24 @@ export function useDeleteProvider() {
     },
   });
 }
+
+export function useCreateProvider() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (yaml: string) => {
+      const res = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/yaml' },
+        body: yaml,
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || res.statusText);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['providers'] });
+    },
+  });
+}

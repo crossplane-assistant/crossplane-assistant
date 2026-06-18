@@ -1,7 +1,7 @@
 import React from 'react';
 import { Clock, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useCompositions, useDeleteComposition } from '../queries/useCompositionQueries';
+import { useCompositions, useDeleteComposition, useCreateComposition } from '../queries/useCompositionQueries';
 import { CompositionViewer } from './CompositionViewer';
 import { ResourceListView } from './ResourceListView';
 
@@ -30,6 +30,7 @@ spec:
 export const ListCompositions: React.FC = () => {
   const { data: compositions = [], isLoading, error } = useCompositions();
   const deleteMutation = useDeleteComposition();
+  const createMutation = useCreateComposition();
 
   const columns = [
     {
@@ -123,6 +124,9 @@ export const ListCompositions: React.FC = () => {
         </div>
       )}
       createModalTemplate={COMPOSITION_TEMPLATE}
+      onCreateSuccess={async (yaml) => {
+        await createMutation.mutateAsync(yaml);
+      }}
     />
   );
 };

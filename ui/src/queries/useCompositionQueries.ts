@@ -53,12 +53,17 @@ export function useDeleteComposition() {
 export function useCreateComposition() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (composition: any) => {
-      return fetchJson<Composition>(API_BASE, {
+    mutationFn: async (yaml: string) => {
+      const res = await fetch(API_BASE, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(composition),
+        headers: { 'Content-Type': 'application/yaml' },
+        body: yaml,
       });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || res.statusText);
+      }
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['compositions'] });

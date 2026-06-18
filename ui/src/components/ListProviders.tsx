@@ -1,5 +1,5 @@
 import React from 'react';
-import { useProviders, useDeleteProvider } from '../queries/useProviderQueries';
+import { useProviders, useDeleteProvider, useCreateProvider } from '../queries/useProviderQueries';
 import { ResourceListView } from './ResourceListView';
 import { getPackageVersion } from '../utils/package';
 
@@ -14,6 +14,7 @@ spec:
 export const ListProviders: React.FC = () => {
   const { data: providers = [], isLoading, error } = useProviders();
   const deleteMutation = useDeleteProvider();
+  const createMutation = useCreateProvider();
 
   const getConditions = (p: any) => p.status?.conditions || [];
   const getStatus = (p: any, type: string) => {
@@ -77,6 +78,9 @@ export const ListProviders: React.FC = () => {
         await deleteMutation.mutateAsync(p.metadata?.name);
       }}
       createModalTemplate={PROVIDER_TEMPLATE}
+      onCreateSuccess={async (yaml) => {
+        await createMutation.mutateAsync(yaml);
+      }}
       ecosystemCategory="provider"
     />
   );
