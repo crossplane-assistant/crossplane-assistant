@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Layers, Sparkles } from 'lucide-react';
+import { Clock, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCompositions, useDeleteComposition } from '../queries/useCompositionQueries';
 import { CompositionViewer } from './CompositionViewer';

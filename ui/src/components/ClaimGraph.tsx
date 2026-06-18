@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ClaimTreeNode } from '../types';
-import { ClaimGraphNode } from './ClaimGraphNode';
 import { RefreshCw, Activity } from 'lucide-react';
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  Node as RFNode,
+  Edge as RFEdge,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { DependencyNode } from './DependencyNode';
 
 export interface ProgressStats {
   total: number;
@@ -36,6 +45,10 @@ export const getProgressStats = (node: ClaimTreeNode | null | undefined): Progre
   return { total, ready, percentage };
 };
 
+const nodeTypes = {
+  dependencyNode: DependencyNode,
+};
+
 interface ClaimGraphProps {
   root: ClaimTreeNode;
   activeNodeId?: string;
@@ -45,6 +58,95 @@ interface ClaimGraphProps {
   onRefresh?: () => void;
   reloadInSeconds?: number;
 }
+
+// Build nodes and edges recursively with deterministic horizontal tree layout
+const buildReactFlowGraph = (
+  rootNode: ClaimTreeNode,
+  activeNodeId: string | undefined,
+  onSelectNode: (node: ClaimTreeNode, resourceTemplate?: any) => void,
+  compositionRevision: any
+) => {
+  const rfNodes: RFNode[] = [];
+  const rfEdges: RFEdge[] = [];
+
+  let currentY = 50;
+  const levelWidth = 480; // Distance between horizontal levels
+  const nodeHeight = 150; // Spacing on Y axis between siblings/leaves
+
+  const traverse = (node: ClaimTreeNode, level: number, parentId?: string): { x: number; y: number } => {
+    const nodeId = node.uid || `${node.kind}-${node.name}-${level}`;
+    const x = 50 + level * levelWidth;
+    let y = 0;
+
+    // Post-order dynamic layout for centering parents
+    if (!node.children || node.children.length === 0) {
+      y = currentY;
+      currentY += nodeHeight;
+    } else {
+      const childPositions = node.children.map((child) => traverse(child, level + 1, nodeId));
+      const sumY = childPositions.reduce((sum, pos) => sum + pos.y, 0);
+      y = sumY / childPositions.length;
+    }
+
+    const resourceTemplate =
+      compositionRevision?.spec?.resources && node.index !== undefined && node.index !== null
+        ? compositionRevision.spec.resources[node.index]
+        : undefined;
+
+    rfNodes.push({
+      id: nodeId,
+      type: 'dependencyNode',
+      position: { x, y },
+      data: {
+        node,
+        isRoot: level === 0,
+        isActive: node.uid === activeNodeId,
+        onSelectNode,
+        resourceTemplate,
+      },
+    });
+
+    if (parentId) {
+      const conditions = node.manifest?.status?.conditions || node.conditions || [];
+      const readyCond = conditions.find((c: any) => c.type === 'Ready');
+      const isDeleting = !!node.manifest?.metadata?.deletionTimestamp;
+
+      let strokeColor = '#cbd5e1';
+      let isAnimated = false;
+
+      if (isDeleting) {
+        strokeColor = '#f59e0b'; // Amber for deletion
+        isAnimated = true;
+      } else if (readyCond && readyCond.status === 'True') {
+        strokeColor = '#10b981'; // Green for ready
+      } else if (readyCond && readyCond.status === 'False') {
+        strokeColor = '#ef4444'; // Red for error
+      } else {
+        strokeColor = '#3b82f6'; // Blue for provisioning in progress
+        isAnimated = true;
+      }
+
+      rfEdges.push({
+        id: `edge-${parentId}-${nodeId}`,
+        source: parentId,
+        sourceHandle: 'source',
+        target: nodeId,
+        targetHandle: 'target',
+        animated: isAnimated,
+        style: {
+          stroke: strokeColor,
+          strokeWidth: 3,
+          transition: 'stroke 0.2s, stroke-width 0.2s',
+        },
+      });
+    }
+
+    return { x, y };
+  };
+
+  traverse(rootNode, 0);
+  return { nodes: rfNodes, edges: rfEdges };
+};
 
 export const ClaimGraph: React.FC<ClaimGraphProps> = ({
   root,
@@ -59,6 +161,16 @@ export const ClaimGraph: React.FC<ClaimGraphProps> = ({
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
+  // Memoize graph mapping to prevent unnecessary layout recalculations on every render
+  const { nodes, edges } = useMemo(() => {
+    return buildReactFlowGraph(root, activeNodeId, onSelectNode, compositionRevision);
+  }, [root, activeNodeId, onSelectNode, compositionRevision]);
+
+  const handleNodeClick = (_event: React.MouseEvent, rfNode: RFNode) => {
+    const { node, resourceTemplate } = rfNode.data as any;
+    onSelectNode(node, resourceTemplate);
   };
 
   return (
@@ -118,17 +230,23 @@ export const ClaimGraph: React.FC<ClaimGraphProps> = ({
         </div>
       </div>
 
-      {/* Graph Visual container */}
-      <div className="graph-container overflow-x-auto overflow-y-auto max-w-full p-6 bg-slate-50/50 border border-slate-200 rounded-xl shadow-inner min-h-[400px]">
-        <div className="inline-block min-w-full">
-          <ClaimGraphNode
-            node={root}
-            isRoot={true}
-            activeNodeId={activeNodeId}
-            onSelectNode={onSelectNode}
-            compositionRevision={compositionRevision}
-          />
-        </div>
+      {/* Graph Visual container (React Flow interactive canvas) */}
+      <div className="w-full h-[550px] bg-slate-50 border border-slate-200 rounded-xl overflow-hidden relative shadow-inner">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          onNodeClick={handleNodeClick}
+          fitView
+          fitViewOptions={{ padding: 0.15 }}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={true}
+        >
+          <Background color="#cbd5e1" gap={16} />
+          <Controls />
+          <MiniMap />
+        </ReactFlow>
       </div>
     </div>
   );
