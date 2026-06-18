@@ -34,11 +34,6 @@ export const CompositionWorkspace: React.FC = () => {
     return saved !== null ? saved === 'true' : false;
   });
 
-  const [zoom, setZoom] = React.useState<number>(() => {
-    const saved = localStorage.getItem('composition-workspace:graph-zoom');
-    return saved !== null ? parseInt(saved, 10) : 100;
-  });
-
   const [maxHeight, setMaxHeight] = React.useState<number>(() => {
     const saved = localStorage.getItem('composition-workspace:graph-height');
     return saved !== null ? parseInt(saved, 10) : 400;
@@ -49,16 +44,8 @@ export const CompositionWorkspace: React.FC = () => {
   }, [isGraphCollapsed]);
 
   React.useEffect(() => {
-    localStorage.setItem('composition-workspace:graph-zoom', String(zoom));
-  }, [zoom]);
-
-  React.useEffect(() => {
     localStorage.setItem('composition-workspace:graph-height', String(maxHeight));
   }, [maxHeight]);
-
-  const handleZoomIn = () => setZoom((prev) => Math.min(150, prev + 10));
-  const handleZoomOut = () => setZoom((prev) => Math.max(50, prev - 10));
-  const handleZoomReset = () => setZoom(100);
 
   const handleHeightIncrease = () => setMaxHeight((prev) => Math.min(800, prev + 100));
   const handleHeightDecrease = () => setMaxHeight((prev) => Math.max(200, prev - 100));
@@ -802,35 +789,7 @@ crossplane version`}
                   <GitFork className="w-4 h-4 text-blue-500 animate-pulse" /> Blueprint Workflow Diagram
                 </h3>
                 <div className="flex items-center gap-4">
-                  {/* Zoom controls */}
-                  {!isGraphCollapsed && (
-                    <div className="flex items-center gap-1.5 bg-white border border-slate-200 px-2 py-1 rounded-md shadow-2xs text-[10px] font-semibold text-slate-600">
-                      <span className="text-slate-400 mr-1 select-none">Zoom :</span>
-                      <button
-                        onClick={handleZoomOut}
-                        disabled={zoom <= 50}
-                        className="px-1 hover:bg-slate-100 rounded disabled:opacity-30 cursor-pointer"
-                        title="Zoom arrière"
-                      >
-                        ➖
-                      </button>
-                      <button
-                        onClick={handleZoomReset}
-                        className="px-1 hover:bg-slate-100 rounded cursor-pointer font-mono"
-                        title="Réinitialiser zoom"
-                      >
-                        {zoom}%
-                      </button>
-                      <button
-                        onClick={handleZoomIn}
-                        disabled={zoom >= 150}
-                        className="px-1 hover:bg-slate-100 rounded disabled:opacity-30 cursor-pointer"
-                        title="Zoom avant"
-                      >
-                        ➕
-                      </button>
-                    </div>
-                  )}
+
 
                   {/* Height controls */}
                   {!isGraphCollapsed && (
@@ -876,7 +835,6 @@ crossplane version`}
                   activeNodeId={selected}
                   onSelectNode={handleSelect}
                   maxHeight={maxHeight}
-                  zoom={zoom}
                 />
               </div>
             </div>

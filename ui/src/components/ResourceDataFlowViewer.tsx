@@ -130,7 +130,7 @@ export const ResourceDataFlowViewer: React.FC<ResourceDataFlowViewerProps> = ({ 
       {outgoing.length > 0 && (
         <div className="space-y-2 pt-2 border-t border-slate-200">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-            <Zap className="w-3.5 h-3.5 text-amber-500" /> Outgoing Outputs (Resource ──▶ XRD Status)
+            <Zap className="w-3.5 h-3.5 text-amber-500" /> Outgoing Outputs (Resource <ArrowRight className="w-4 h-4 text-slate-400 flex-shrink-0" /> XRD Status)
           </div>
           <div className="space-y-2">
             {outgoing.map((p, idx) => {

@@ -1,5 +1,14 @@
-import React from 'react';
-import { Cpu, Layers } from 'lucide-react';
+import React, { useMemo } from 'react';
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  Node as RFNode,
+  Edge as RFEdge,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { BlueprintNode } from './BlueprintNode';
 
 export interface VirtualNode {
   id: string;
@@ -24,7 +33,6 @@ export const buildVirtualTree = (composition: any): VirtualNode => {
   };
 
   if (pipeline.length > 0) {
-    let globalResCounter = 0;
     root.children = pipeline.map((step: any, idx: number) => {
       const stepName = step.step || `step-${idx}`;
       const isPt = step.functionRef?.name?.toLowerCase().includes('patch-and-transform') || false;
@@ -37,7 +45,6 @@ export const buildVirtualTree = (composition: any): VirtualNode => {
         apiVersion: step.functionRef?.name || '',
         isStep: true,
         children: stepResources.map((res: any) => {
-          globalResCounter++;
           return {
             id: `resource:${res.name}`,
             name: res.name,
@@ -60,125 +67,115 @@ export const buildVirtualTree = (composition: any): VirtualNode => {
   return root;
 };
 
+const nodeTypes = {
+  blueprintNode: BlueprintNode,
+};
+
 interface CompositionGraphProps {
   composition: any;
   activeNodeId?: string;
   onSelectNode: (nodeId: string) => void;
   maxHeight?: number;
-  zoom?: number;
 }
+
+const buildReactFlowGraph = (
+  virtualRoot: VirtualNode,
+  activeNodeId: string,
+  onSelectNode: (nodeId: string) => void
+) => {
+  const rfNodes: RFNode[] = [];
+  const rfEdges: RFEdge[] = [];
+
+  let currentY = 50;
+  const levelWidth = 400; // Horizontal distance between GVK / Steps / Resources
+  const nodeHeight = 110; // Vertical gap between leaves
+
+  const traverse = (node: VirtualNode, level: number, parentId?: string): { x: number; y: number } => {
+    const nodeId = node.id;
+    const x = 50 + level * levelWidth;
+    let y = 0;
+
+    // DFS centering layout
+    if (!node.children || node.children.length === 0) {
+      y = currentY;
+      currentY += nodeHeight;
+    } else {
+      const childPositions = node.children.map((child) => traverse(child, level + 1, nodeId));
+      const sumY = childPositions.reduce((sum, pos) => sum + pos.y, 0);
+      y = sumY / childPositions.length;
+    }
+
+    rfNodes.push({
+      id: nodeId,
+      type: 'blueprintNode',
+      position: { x, y },
+      data: {
+        node,
+        isRoot: level === 0,
+        isActive: nodeId === activeNodeId || (nodeId === 'xrd' && activeNodeId === ''),
+        onSelectNode,
+      },
+    });
+
+    if (parentId) {
+      rfEdges.push({
+        id: `edge-${parentId}-${nodeId}`,
+        source: parentId,
+        sourceHandle: 'source',
+        target: nodeId,
+        targetHandle: 'target',
+        animated: true,
+        style: {
+          stroke: '#3b82f6', // Animated blue edge represents the execution flow
+          strokeWidth: 3,
+        },
+      });
+    }
+
+    return { x, y };
+  };
+
+  traverse(virtualRoot, 0);
+  return { nodes: rfNodes, edges: rfEdges };
+};
 
 export const CompositionGraph: React.FC<CompositionGraphProps> = ({
   composition,
   activeNodeId = '',
   onSelectNode,
   maxHeight = 300,
-  zoom = 100,
 }) => {
   const virtualRoot = buildVirtualTree(composition);
 
-  return (
-    <div 
-      className="graph-container overflow-x-auto overflow-y-auto max-w-full p-4 bg-slate-50/40 border border-slate-200 rounded-xl shadow-inner min-h-[140px]"
-      style={{ maxHeight: `${maxHeight}px` }}
-    >
-      <div 
-        className="inline-block min-w-full"
-        style={{ zoom: zoom !== 100 ? `${zoom}%` : undefined }}
-      >
-        <CompositionGraphNode
-          node={virtualRoot}
-          isRoot={true}
-          activeNodeId={activeNodeId}
-          onSelectNode={onSelectNode}
-        />
-      </div>
-    </div>
-  );
-};
+  const { nodes, edges } = useMemo(() => {
+    return buildReactFlowGraph(virtualRoot, activeNodeId, onSelectNode);
+  }, [virtualRoot, activeNodeId, onSelectNode]);
 
-interface CompositionGraphNodeProps {
-  node: VirtualNode;
-  isRoot?: boolean;
-  first?: boolean;
-  last?: boolean;
-  uniq?: boolean;
-  activeNodeId?: string;
-  onSelectNode: (nodeId: string) => void;
-}
-
-const CompositionGraphNode: React.FC<CompositionGraphNodeProps> = ({
-  node,
-  isRoot = false,
-  first = false,
-  last = false,
-  uniq = false,
-  activeNodeId = '',
-  onSelectNode,
-}) => {
-  const isActive = node.id === activeNodeId;
-  const hasChildren = node.children && node.children.length > 0;
+  const handleNodeClick = (_event: React.MouseEvent, rfNode: RFNode) => {
+    const { node } = rfNode.data as any;
+    onSelectNode(node.id === 'xrd' ? '' : node.id);
+  };
 
   return (
     <div
-      className={`graph-wrapper ${isRoot ? 'root' : ''} ${first ? 'first' : ''} ${last ? 'last' : ''} ${uniq ? 'uniq' : ''}`}
+      className="w-full bg-slate-50 border border-slate-200 rounded-xl overflow-hidden relative shadow-inner"
+      style={{ height: `${maxHeight}px` }}
     >
-      {!isRoot && <div className="connector root" />}
-
-      <div className={`${isRoot ? 'flex root' : 'flex'} items-stretch gap-0`}>
-        {/* Node card */}
-        <div className="flex items-center flex-shrink-0" style={{ minWidth: '320px' }}>
-          <button
-            onClick={() => onSelectNode(node.id === 'xrd' ? '' : node.id)}
-            className={`cursor-pointer rounded-xl py-2 px-3.5 my-2 w-[310px] min-h-[70px] shadow-sm bg-white border transition-all flex flex-col justify-center relative group text-left ${
-              isActive
-                ? 'ring-2 ring-blue-500 border-blue-500 shadow-md bg-blue-50/5'
-                : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
-            }`}
-          >
-            <div className="flex items-center gap-3 w-full">
-              <div className="p-2 bg-slate-50 border border-slate-100 rounded-lg text-slate-500 group-hover:bg-slate-100 transition-colors flex-shrink-0">
-                {node.id === 'xrd' ? (
-                  <Layers className="w-4 h-4 text-blue-500" />
-                ) : node.isStep ? (
-                  <Cpu className="w-4 h-4 text-slate-500 animate-spin-slow" />
-                ) : (
-                  <Layers className="w-4 h-4 text-indigo-500" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="font-extrabold text-[11px] text-slate-800 font-mono truncate">
-                  {node.name}
-                </div>
-                <div className="text-[9px] text-slate-400 font-mono mt-0.5 truncate uppercase font-bold tracking-wider">
-                  {node.kind}
-                </div>
-                <div className="text-[8px] text-slate-400 font-mono truncate">
-                  {node.apiVersion}
-                </div>
-              </div>
-            </div>
-          </button>
-        </div>
-
-        {/* Children rendering */}
-        {hasChildren && (
-          <div className="graph-children flex flex-col justify-center pl-[25px] relative">
-            <div className="connector line" />
-            {node.children!.map((child, idx) => (
-              <CompositionGraphNode
-                key={child.id}
-                node={child}
-                first={idx === 0}
-                last={idx === node.children!.length - 1}
-                uniq={node.children!.length === 1}
-                activeNodeId={activeNodeId}
-                onSelectNode={onSelectNode}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodeClick={handleNodeClick}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        elementsSelectable={true}
+      >
+        <Background color="#cbd5e1" gap={16} />
+        <Controls />
+        <MiniMap />
+      </ReactFlow>
     </div>
   );
 };
