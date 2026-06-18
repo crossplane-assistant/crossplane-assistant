@@ -12,12 +12,17 @@ The system SHALL parse any `Composition` manifest (supporting both legacy `spec.
 - **THEN** for each step in `spec.pipeline`, it generates a Step node, and if the step references `function-patch-and-transform`, it generates child nodes for each resource listed in `step.input.resources`
 
 ### Requirement: Interactive Composition Graph
-The workspace main pane SHALL render a horizontal tree graph (the "Composition Graph") at the top. The graph SHALL represent the Composition's structure visually by connecting GVK, step, and resource nodes with horizontal line connectors. Each node in the graph SHALL be interactive, and clicking a node SHALL update the active workspace selection and query parameters (e.g. `?selected=resource:RDSInstance`).
+The workspace main pane SHALL render an interactive canvas utilizing React Flow (the "Composition Graph") at the top. The graph SHALL represent the Composition's structure visually by connecting GVK, step, and resource nodes with animated execution flow edges. The graph SHALL support panning, zooming, and a minimap for navigation. Each node in the graph SHALL be interactive, and clicking a node SHALL update the active workspace selection and query parameters (e.g. `?selected=resource:RDSInstance`).
 
 #### Scenario: Interacting with the Composition Graph Nodes
 - **WHEN** the user is in the Composition Workspace and clicks on a Composed Resource node in the graph
 - **THEN** the application updates the URL query parameter `?selected=resource:<name>`
 - **THEN** the selection in the left-hand tree nav and the details pane below synchronize instantly to focus on that resource
+
+#### Scenario: Zooming and Panning the Composition Graph
+- **WHEN** the user is in the Composition Workspace and interacts with the graph canvas
+- **THEN** they can zoom using the mouse wheel / controls and pan by dragging the background grid
+- **THEN** the canvas displays a dot-grid background and a mini-navigation map at the bottom corner for rapid navigation.
 
 ### Requirement: Responsive Collapsible Graph Header
 To optimize vertical screen real-estate, the Composition Graph SHALL support collapsible states. When no item is selected, the graph SHALL display in full-height as a welcoming dashboard. When an item is selected, the graph SHALL support collapsing into a compact header row (or collapsible accordion container) to maximize space for code editing and patch details in the panels below.

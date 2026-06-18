@@ -315,18 +315,23 @@ export const ListManagedResources: React.FC = () => {
                             <button
                               key={`${k.group}/${k.kind}`}
                               onClick={() => handleSelectKind(k)}
-                              className={`w-full flex items-center justify-between py-1.5 pr-2.5 text-left text-xs transition-all cursor-pointer ${
+                              className={`w-full flex items-center justify-between py-2 pr-2.5 text-left text-xs transition-all cursor-pointer ${
                                 isSelected
-                                  ? 'bg-blue-50/40 text-blue-600 border-l-4 border-blue-500 font-semibold pl-2.5'
+                                  ? 'bg-blue-50/40 text-blue-600 border-l-4 border-blue-500 pl-2.5'
                                   : 'text-slate-600 hover:bg-slate-50 border-l-4 border-transparent pl-3'
                               }`}
                             >
-                              <span className="truncate mr-2" title={`${k.kind} (${k.group})`}>
-                                {k.kind}
-                              </span>
+                              <div className="flex flex-col min-w-0 flex-1 mr-2">
+                                <span className={`truncate ${isSelected ? 'font-bold text-blue-600' : 'font-medium text-slate-700'}`}>
+                                  {k.kind}
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono truncate mt-0.5" title={`${k.group}/${k.version}`}>
+                                  {k.group}/{k.version}
+                                </span>
+                              </div>
                               {total > 0 && (
                                 <span
-                                  className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold font-mono leading-none ${
+                                  className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold font-mono leading-none flex-shrink-0 ${
                                     isUnhealthy
                                       ? 'bg-rose-50 text-rose-600 border border-rose-100/50'
                                       : 'bg-slate-100 text-slate-500'

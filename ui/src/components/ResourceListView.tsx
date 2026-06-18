@@ -7,6 +7,7 @@ import { Search, Trash2, X, BookOpen, Plus, Layers } from 'lucide-react';
 import { ResourceRelations } from './ResourceRelations';
 import { SchemaBrowser } from './SchemaBrowser';
 import { EcosystemCatalog } from './EcosystemCatalog';
+import { ClaimNodeLogo } from './ClaimNodeLogo';
 import type { EcosystemItem } from '../utils/ecosystemCatalog';
 import { isResourceHealthy } from '../utils/health';
 
@@ -59,6 +60,9 @@ export function ResourceListView<T>({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [createYamlValue, setCreateYamlValue] = useState<string>('');
+
+  const itemKind = selectedItem ? ((selectedItem as any).kind || (selectedItem as any).base?.kind || '') : '';
+  const itemApiVersion = selectedItem ? ((selectedItem as any).apiVersion || (selectedItem as any).base?.apiVersion || '') : '';
 
   const [searchParams, setSearchParams] = useSearchParams();
   const queryName = searchParams.get('name');
@@ -345,13 +349,21 @@ export function ResourceListView<T>({
           />
           <div className="fixed inset-y-0 right-0 w-[650px] bg-white shadow-2xl border-l border-slate-200 flex flex-col z-50 animate-slideIn">
           {/* Header */}
-          <div className="p-6 border-b border-slate-150 bg-slate-50 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="font-extrabold text-slate-800 text-lg font-mono">
-                {getRowName(selectedItem)}
-              </span>
+          <div className="p-6 border-b border-slate-150 bg-slate-50 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <ClaimNodeLogo apiVersion={itemApiVersion} kind={itemKind} />
+              <div className="flex flex-col min-w-0">
+                <span className="font-extrabold text-slate-800 text-lg font-mono truncate max-w-[420px]" title={getRowName(selectedItem)}>
+                  {getRowName(selectedItem)}
+                </span>
+                {itemKind && (
+                  <span className="text-[10px] text-slate-500 font-mono mt-0.5 uppercase tracking-wider font-bold">
+                    {itemKind} ({itemApiVersion})
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-shrink-0">
               {onDelete && (
                 <button
                   onClick={() => handleDelete(selectedItem)}
