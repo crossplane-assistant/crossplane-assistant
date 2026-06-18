@@ -66,13 +66,6 @@ export const ListCompositions: React.FC = () => {
       render: (comp: any) => (
         <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Link
-            to={`/explore/compositions/${comp.metadata?.name}`}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-all hover:scale-[1.02]"
-            title="Standard Tree View"
-          >
-            <Layers className="w-3.5 h-3.5" /> Workspace
-          </Link>
-          <Link
             to={`/explore/compositions/${comp.metadata?.name}?view=canvas`}
             className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all hover:scale-[1.02]"
             title="Visual Composition Builder"
@@ -112,12 +105,6 @@ export const ListCompositions: React.FC = () => {
           <div className="flex items-center justify-between px-4 pt-2 border-b border-slate-100 pb-3">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Workspace Quick Links</span>
             <div className="flex items-center gap-2">
-              <Link
-                to={`/explore/compositions/${comp.metadata?.name}`}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow-md cursor-pointer border border-blue-500 hover:border-blue-600"
-              >
-                <Layers className="w-3.5 h-3.5" /> Tree Workspace
-              </Link>
               <Link
                 to={`/explore/compositions/${comp.metadata?.name}?view=canvas`}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all hover:shadow-md cursor-pointer border border-indigo-500 hover:border-indigo-600"

@@ -272,7 +272,7 @@ export const CompositionWorkspace: React.FC = () => {
             <span className="text-2xl mt-0.5">🧪</span>
             <div className="space-y-1">
               <h4 className="font-bold text-sm text-blue-900 group-hover:text-blue-700">
-                Ouvrir le Bac à Sable (Dry-Run)
+                Ouvrir la Sandbox (Dry-Run)
               </h4>
               <p className="text-xs text-blue-700/80 leading-relaxed">
                 Simulez instantanément le rendu de vos compositions localement sans impacter votre cluster. Testez vos Claim de manière sécurisée et diagnostiquez les erreurs de validation en direct.
@@ -480,7 +480,7 @@ export const CompositionWorkspace: React.FC = () => {
           <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
             <div>
               <h3 className="text-base font-extrabold text-slate-800 flex items-center gap-2">
-                <span className="text-lg">🧪</span> Bac à Sable (Dry-Run Engine)
+                <span className="text-lg">🧪</span> Sandbox (Dry-Run Engine)
               </h3>
               <p className="text-xs text-slate-500 mt-1">
                 Modifiez votre claim fictive et la définition de la composition pour simuler le rendu des ressources.
@@ -523,7 +523,7 @@ export const CompositionWorkspace: React.FC = () => {
                       : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
                   }`}
                 >
-                  📄 Dummy Claim
+                  📄 Claim
                 </button>
                 <button
                   onClick={() => setSandboxActiveTab('composition')}
@@ -533,7 +533,7 @@ export const CompositionWorkspace: React.FC = () => {
                       : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
                   }`}
                 >
-                  🛠️ Composition YAML
+                  🛠️ Composition
                 </button>
               </div>
 
@@ -714,7 +714,7 @@ crossplane version`}
                 : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 shadow-2xs hover:text-slate-900'
             }`}
           >
-            <span>🧪 Bac à Sable</span>
+            <span>🧪 Sandbox</span>
           </button>
         </div>
       </div>
