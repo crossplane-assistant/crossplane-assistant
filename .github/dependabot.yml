@@ -13,6 +13,19 @@ updates:
       - "dependencies"
       - "automated"
 
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    allow:
+      - dependency-type: "all"
+    reviewers:
+      - "crossplane-assistant/maintainers"
+    labels:
+      - "dependencies"
+      - "automated"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
