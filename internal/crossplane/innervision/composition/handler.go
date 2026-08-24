@@ -10,14 +10,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewHandler(compositionService *Service) *Handler {
+func NewHandler(compositionService CompositionService) *Handler {
 	return &Handler{
 		compositionService: compositionService,
 	}
 }
 
 type Handler struct {
-	compositionService *Service
+	compositionService CompositionService
 }
 
 func (h *Handler) List(c *gin.Context) {

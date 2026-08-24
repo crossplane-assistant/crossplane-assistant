@@ -22,13 +22,30 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
+// KubernetesProviderClient is the minimal surface of *v1alpha1.KubernetesV1AlphaClient
+// that Service depends on, so tests can substitute a fake without constructing
+// a real REST-backed client.
+type KubernetesProviderClient interface {
+	Objects() v1alpha1.ObjectInterface
+}
+
+// ClaimService is the interface Handler depends on, implemented by Service.
+type ClaimService interface {
+	List(ctx context.Context, opts *ListOpt) ([]claim.Unstructured, error)
+	Get(ctx context.Context, ref *unstruct.ResourceRef) (*claim.Unstructured, error)
+	GetResourcesTree(ctx context.Context, ref *unstruct.ResourceRef) (*Tree, error)
+	Create(ctx context.Context, unstructured *unstructured.Unstructured) (*unstructured.Unstructured, error)
+	Update(ctx context.Context, unstructured *unstructured.Unstructured) (*unstructured.Unstructured, error)
+	Delete(ctx context.Context, ref *unstruct.ResourceRef) error
+}
+
 func NewClaimService(
 	xrdItf compositionv1.CompositeResourceDefinitionsInterface,
 	crdClient crdv1.CustomResourceDefinitionInterface,
 	crdRegistry *resource.CRDRegistry,
 	discoveryClient discovery.DiscoveryInterface,
-	dynamicClient *dynamic.DynamicClient,
-	xK8sProviderClient *v1alpha1.KubernetesV1AlphaClient,
+	dynamicClient dynamic.Interface,
+	xK8sProviderClient KubernetesProviderClient,
 	resourceResolver *unstruct.ResourceResolver,
 
 ) *Service {
@@ -49,8 +66,8 @@ type Service struct {
 	crdRegistry        *resource.CRDRegistry
 	crdClient          crdv1.CustomResourceDefinitionInterface
 	discoveryCli       discovery.DiscoveryInterface
-	dynamicClient      *dynamic.DynamicClient
-	xK8sProviderClient *v1alpha1.KubernetesV1AlphaClient
+	dynamicClient      dynamic.Interface
+	xK8sProviderClient KubernetesProviderClient
 	resourceResolver   *unstruct.ResourceResolver
 }
 
@@ -87,7 +104,7 @@ func (s *Service) List(ctx context.Context, opts *ListOpt) ([]claim.Unstructured
 	}
 
 	var xrdList = compositeResourceDef.Items
-	if opts == nil && len(opts.Kinds) > 0 {
+	if opts != nil && len(opts.Kinds) > 0 {
 		xrdList = s.filterXRD(xrdList, opts.Kinds)
 	}
 
@@ -123,7 +140,7 @@ func (s *Service) List(ctx context.Context, opts *ListOpt) ([]claim.Unstructured
 	}
 
 	// Hide managed fields from the resources
-	if opts.HideManagedFields {
+	if opts != nil && opts.HideManagedFields {
 		for _, item := range res {
 			item.SetManagedFields(nil)
 		}

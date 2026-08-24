@@ -1,0 +1,29 @@
+# mockery generates test doubles for the Go interfaces this change's backend
+# unit tests need. Regenerate with `make mocks` after changing any of the
+# interfaces listed below. Do not widen `packages` beyond what tests actually
+# consume - most k8s client interfaces are better served by real fake
+# clientsets (apiextensionsfake, client-go/kubernetes/fake).
+with-expecter: true
+dir: "{{.InterfaceDir}}/mocks"
+outpkg: mocks
+filename: "{{.InterfaceName}}.go"
+mockname: "{{.InterfaceName}}"
+resolve-type-alias: false
+disable-version-string: true
+issue-845-fix: true
+packages:
+  github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/claim:
+    interfaces:
+      ClaimService:
+  github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/composition:
+    interfaces:
+      CompositionService:
+  github.com/ldassonville/crossplane-assistant/internal/crossplane/innervision/diagnostic:
+    interfaces:
+      DiagnosticService:
+  github.com/ldassonville/crossplane-assistant/internal/crossplane/client/apiextentions/v1:
+    interfaces:
+      CompositionInterface:
+  github.com/ldassonville/crossplane-assistant/internal/crossplane/client/pkg/v1:
+    interfaces:
+      ProviderRevisionInterface:

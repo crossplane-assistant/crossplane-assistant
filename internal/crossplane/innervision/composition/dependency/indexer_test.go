@@ -21,10 +21,7 @@ func TestIndex(t *testing.T) {
 
 	for _, tc := range tcs {
 		err := indexer.Index(tc, attachedItem)
-
-		if err != nil {
-			t.Errorf("Error indexing path %s: %s", tc, err)
-		}
+		assert.NoErrorf(t, err, "Error indexing path %s", tc)
 	}
 
 	_ = indexer.Print(os.Stdout)
@@ -34,9 +31,7 @@ func TestIndex(t *testing.T) {
 			ResolvePrefixed: true,
 		})
 
-		if node == nil {
-			t.Errorf("Indexed item with path %s not found", tc)
-		}
+		assert.NotNilf(t, node, "Indexed item with path %s not found", tc)
 	}
 }
 
@@ -60,9 +55,7 @@ func TestPartialIndexing(t *testing.T) {
 
 	for _, ic := range indexContent {
 		err := indexer.Index(ic, ic)
-		if err != nil {
-			t.Errorf("Error indexing path %s: %s", ic, err)
-		}
+		assert.NoErrorf(t, err, "Error indexing path %s", ic)
 	}
 
 	_ = indexer.Print(os.Stdout)
@@ -72,13 +65,10 @@ func TestPartialIndexing(t *testing.T) {
 			ResolvePrefixed: true,
 		})
 
-		if node == nil {
-			assert.Failf(t, "fail to resolve partial content", "Indexed item with path %s not found", tc.path)
+		if !assert.NotNilf(t, node, "Indexed item with path %s not found", tc.path) {
 			continue
 		}
 
-		if node.attachedItems[0] != tc.expected {
-			assert.Failf(t, "fail to resolve partial content", "Expected %s but got %s", tc.expected, node.attachedItems[0])
-		}
+		assert.Equalf(t, tc.expected, node.attachedItems[0], "Expected %s but got %s", tc.expected, node.attachedItems[0])
 	}
 }

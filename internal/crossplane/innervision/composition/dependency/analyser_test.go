@@ -7,6 +7,7 @@ import (
 
 	v1 "github.com/crossplane/crossplane/apis/apiextensions/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	yaml2 "k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -26,18 +27,12 @@ func loadComposition() (*v1.Composition, error) {
 func TestAnalyser(t *testing.T) {
 
 	c, err := loadComposition()
-	if err != nil {
-		t.Errorf("Fail to load composition testcase: %s", err)
-		return
-	}
+	require.NoError(t, err, "Fail to load composition testcase")
 
 	analyser := NewAnalyser()
 
 	err = analyser.Load(c)
-	if err != nil {
-		assert.NoError(t, err, "Fail to analyse composition")
-		return
-	}
+	require.NoError(t, err, "Fail to analyse composition")
 
 	for idx, tmpl := range analyser.resourcesIndex {
 
@@ -63,12 +58,8 @@ func TestAnalyser(t *testing.T) {
 func TestPipelineAnalyser(t *testing.T) {
 	c := &v1.Composition{}
 	yamlFile, err := os.ReadFile("./testdata/pipeline_composition.yaml")
-	if err != nil {
-		t.Fatalf("Fail to load pipeline composition: %s", err)
-	}
-	if err := yaml2.Unmarshal(yamlFile, c); err != nil {
-		t.Fatalf("Fail to unmarshal pipeline composition: %s", err)
-	}
+	require.NoError(t, err, "Fail to load pipeline composition")
+	require.NoError(t, yaml2.Unmarshal(yamlFile, c), "Fail to unmarshal pipeline composition")
 
 	analyser := NewAnalyser()
 	err = analyser.Load(c)

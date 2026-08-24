@@ -14,6 +14,7 @@ SHELL:=/bin/bash -e
 IMG_FRONT ?= crossplane-assistant/crossplane-assistant-ui:latest
 IMG_API ?= crossplane-assistant/crossplane-assistant-api:latest
 IMG_UNIFIED ?= crossplane-assistant/crossplane-assistant:latest
+MOCKERY_VERSION ?= v2.53.3
 
 
 .PHONY: help
@@ -74,6 +75,10 @@ docker-ui: build-ui ## Build the docker image (legacy)
 .PHONY: docker
 docker: docker-ui docker-api ## Build docker image for UI and API (legacy)
 
+
+.PHONY: mocks
+mocks: ## regenerate mockery mocks for the interfaces listed in .mockery.yaml
+	go run github.com/vektra/mockery/v2@$(MOCKERY_VERSION)
 
 .PHONY: fmt
 fmt:

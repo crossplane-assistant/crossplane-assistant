@@ -22,7 +22,7 @@ var k8sNativeGroups = []string{"", "app", "batch", "extensions", "autoscaling", 
 	"storage.k8s.io", "rbac.authorization.k8s.io"}
 
 func NewResourceResolver(
-	dynamicClient *dynamic.DynamicClient,
+	dynamicClient dynamic.Interface,
 	crdRegistry *resource.CRDRegistry,
 ) *ResourceResolver {
 
@@ -33,7 +33,7 @@ func NewResourceResolver(
 }
 
 type ResourceResolver struct {
-	dynamicClient *dynamic.DynamicClient
+	dynamicClient dynamic.Interface
 	crdRegistry   *resource.CRDRegistry
 }
 

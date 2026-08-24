@@ -9,6 +9,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// CompositionService is the interface Handler depends on, implemented by Service.
+type CompositionService interface {
+	List(ctx context.Context) (*v1.CompositionList, error)
+	Get(ctx context.Context, name string) (*v1.Composition, error)
+	GetDependencies(ctx context.Context, name string) (*dependency.ResourceGraph, error)
+	Create(ctx context.Context, composition *v1.Composition) (*v1.Composition, error)
+	Update(ctx context.Context, composition *v1.Composition) (*v1.Composition, error)
+	Delete(ctx context.Context, name string) error
+}
+
 // NewService Create a new composition service
 // param compositionClient: the client to interact with the composition API
 func NewService(

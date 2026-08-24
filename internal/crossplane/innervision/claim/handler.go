@@ -10,14 +10,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewHandler(claimService *Service) *Handler {
+func NewHandler(claimService ClaimService) *Handler {
 	return &Handler{
 		claimService: claimService,
 	}
 }
 
 type Handler struct {
-	claimService *Service
+	claimService ClaimService
 }
 
 // Get give a claim by its reference

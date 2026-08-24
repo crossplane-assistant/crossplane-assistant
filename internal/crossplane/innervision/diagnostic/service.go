@@ -20,9 +20,14 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// DiagnosticService is the interface Handler depends on, implemented by Service.
+type DiagnosticService interface {
+	GetClaimDiagnostics(ctx context.Context, ref *unstruct.ResourceRef) (*DiagnosticResponse, error)
+}
+
 type Service struct {
 	clientSet    kubernetes.Interface
-	claimService *claim.Service
+	claimService claim.ClaimService
 	eventService *event.Service
 	crdRegistry  *resource.CRDRegistry
 	prRegistry   *providerrevision.Registry
@@ -30,7 +35,7 @@ type Service struct {
 
 func NewService(
 	clientSet kubernetes.Interface,
-	claimService *claim.Service,
+	claimService claim.ClaimService,
 	eventService *event.Service,
 	crdRegistry *resource.CRDRegistry,
 	prRegistry *providerrevision.Registry,
