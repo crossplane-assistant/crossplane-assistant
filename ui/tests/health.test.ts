@@ -1,101 +1,80 @@
+import { describe, test, expect } from 'vitest';
 import { isResourceHealthy } from '../src/utils/health';
 
-/**
- * Self-contained unit tests to verify the correctness of the
- * isResourceHealthy utility across multiple Kubernetes and Crossplane mock states.
- */
-export function runHealthTests() {
-  console.log('Starting health evaluation utility tests...');
+describe('isResourceHealthy', () => {
+  test('returns false for a null resource', () => {
+    expect(isResourceHealthy(null)).toBe(false);
+  });
 
-  // Test Case 1: Null or undefined resource
-  if (isResourceHealthy(null) !== false) {
-    throw new Error('Test Case 1 failed: Expected false for null resource');
-  }
+  test('returns true for a resource with no conditions field (e.g. Compositions)', () => {
+    const mockResource = {
+      metadata: { name: 'test-composition' },
+    };
+    expect(isResourceHealthy(mockResource)).toBe(true);
+  });
 
-  // Test Case 2: Resource with no conditions field (should be considered healthy/ready, e.g. Compositions)
-  const mockResource2 = {
-    metadata: { name: 'test-composition' },
-  };
-  if (isResourceHealthy(mockResource2) !== true) {
-    throw new Error('Test Case 2 failed: Expected true for resource without conditions');
-  }
+  test('returns true for a resource with an empty conditions array', () => {
+    const mockResource = {
+      metadata: { name: 'test-empty-conditions' },
+      status: { conditions: [] },
+    };
+    expect(isResourceHealthy(mockResource)).toBe(true);
+  });
 
-  // Test Case 3: Resource with empty conditions array
-  const mockResource3 = {
-    metadata: { name: 'test-empty-conditions' },
-    status: { conditions: [] }
-  };
-  if (isResourceHealthy(mockResource3) !== true) {
-    throw new Error('Test Case 3 failed: Expected true for resource with empty conditions');
-  }
+  test('returns true for a resource with only non-critical conditions', () => {
+    const mockResource = {
+      metadata: { name: 'test-non-critical' },
+      status: {
+        conditions: [{ type: 'SomeOtherCondition', status: 'False' }],
+      },
+    };
+    expect(isResourceHealthy(mockResource)).toBe(true);
+  });
 
-  // Test Case 4: Resource with non-critical conditions (should be ignored and return true)
-  const mockResource4 = {
-    metadata: { name: 'test-non-critical' },
-    status: {
-      conditions: [
-        { type: 'SomeOtherCondition', status: 'False' }
-      ]
-    }
-  };
-  if (isResourceHealthy(mockResource4) !== true) {
-    throw new Error('Test Case 4 failed: Expected true for resource with non-critical conditions');
-  }
+  test('returns true for a resource with Ready: True', () => {
+    const mockResource = {
+      metadata: { name: 'test-ready' },
+      status: {
+        conditions: [{ type: 'Ready', status: 'True' }],
+      },
+    };
+    expect(isResourceHealthy(mockResource)).toBe(true);
+  });
 
-  // Test Case 5: Resource with 'Ready' condition as 'True' (healthy)
-  const mockResource5 = {
-    metadata: { name: 'test-ready' },
-    status: {
-      conditions: [
-        { type: 'Ready', status: 'True' }
-      ]
-    }
-  };
-  if (isResourceHealthy(mockResource5) !== true) {
-    throw new Error('Test Case 5 failed: Expected true for resource with Ready: True');
-  }
+  test('returns false for a resource with Ready: False', () => {
+    const mockResource = {
+      metadata: { name: 'test-unready' },
+      status: {
+        conditions: [{ type: 'Ready', status: 'False' }],
+      },
+    };
+    expect(isResourceHealthy(mockResource)).toBe(false);
+  });
 
-  // Test Case 6: Resource with 'Ready' condition as 'False' (unhealthy)
-  const mockResource6 = {
-    metadata: { name: 'test-unready' },
-    status: {
-      conditions: [
-        { type: 'Ready', status: 'False' }
-      ]
-    }
-  };
-  if (isResourceHealthy(mockResource6) !== false) {
-    throw new Error('Test Case 6 failed: Expected false for resource with Ready: False');
-  }
+  test('returns false when one of multiple critical conditions is failing', () => {
+    const mockResource = {
+      metadata: { name: 'test-mixed' },
+      status: {
+        conditions: [
+          { type: 'Ready', status: 'True' },
+          { type: 'Synced', status: 'False' },
+        ],
+      },
+    };
+    expect(isResourceHealthy(mockResource)).toBe(false);
+  });
 
-  // Test Case 7: Multiple critical conditions, one failing (unhealthy)
-  const mockResource7 = {
-    metadata: { name: 'test-mixed' },
-    status: {
-      conditions: [
-        { type: 'Ready', status: 'True' },
-        { type: 'Synced', status: 'False' }
-      ]
-    }
-  };
-  if (isResourceHealthy(mockResource7) !== false) {
-    throw new Error('Test Case 7 failed: Expected false when Synced is False');
-  }
-
-  // Test Case 8: Multiple critical conditions, all passing (healthy)
-  const mockResource8 = {
-    metadata: { name: 'test-all-passing' },
-    status: {
-      conditions: [
-        { type: 'Ready', status: 'True' },
-        { type: 'Synced', status: 'True' },
-        { type: 'Healthy', status: 'True' }
-      ]
-    }
-  };
-  if (isResourceHealthy(mockResource8) !== true) {
-    throw new Error('Test Case 8 failed: Expected true when all critical conditions are True');
-  }
-
-  console.log('✓ All health evaluation utility tests passed successfully!');
-}
+  test('returns true when all critical conditions are passing', () => {
+    const mockResource = {
+      metadata: { name: 'test-all-passing' },
+      status: {
+        conditions: [
+          { type: 'Ready', status: 'True' },
+          { type: 'Synced', status: 'True' },
+          { type: 'Healthy', status: 'True' },
+        ],
+      },
+    };
+    expect(isResourceHealthy(mockResource)).toBe(true);
+  });
+});

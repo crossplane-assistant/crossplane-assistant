@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest';
 import { parseYAMLToIR, updateYAMLPath } from '../src/utils/compositionParser';
 
 describe('Composition Parser & AST Updater', () => {

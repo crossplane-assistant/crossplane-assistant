@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest';
 import { CURATED_PRESETS, mergeEcosystemData, injectVersionIntoYaml } from '../src/utils/ecosystemCatalog';
 
 describe('Ecosystem Catalog Utilities', () => {

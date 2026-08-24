@@ -11,7 +11,7 @@ describe('Resource Creation API Integration Tests', () => {
       ok: true,
       json: async () => mockResponse,
     });
-    global.fetch = mockFetch;
+    globalThis.fetch = mockFetch;
 
     const API_BASE = '/crossplane/providers';
     const yamlPayload = `apiVersion: pkg.crossplane.io/v1
@@ -46,7 +46,7 @@ spec:
       statusText: 'Bad Request',
       text: async () => serverError,
     });
-    global.fetch = mockFetch;
+    globalThis.fetch = mockFetch;
 
     const API_BASE = '/crossplane/providers';
     const invalidYaml = 'invalid:: yaml';

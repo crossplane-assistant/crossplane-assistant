@@ -1,3 +1,4 @@
+import { describe, test, expect } from 'vitest';
 import { getPackageVersion } from '../src/utils/package';
 
 describe('Package Version Utilities', () => {

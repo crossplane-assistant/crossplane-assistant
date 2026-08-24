@@ -23,7 +23,7 @@ export interface ActiveAttribute {
 }
 
 // Custom Node for XRD Composite Input
-const CompositeInputNode: React.FC<{ data: any }> = ({ data }) => {
+export const CompositeInputNode: React.FC<{ data: any }> = ({ data }) => {
   const fields = data.fields || [];
   const activeAttribute = data.activeAttribute as ActiveAttribute | null;
   const highlightedFields = data.highlightedFields as Set<string> | undefined;
@@ -94,7 +94,7 @@ const CompositeInputNode: React.FC<{ data: any }> = ({ data }) => {
 };
 
 // Custom Node for Managed Resource (MR)
-const ManagedResourceNode: React.FC<{ data: any }> = ({ data }) => {
+export const ManagedResourceNode: React.FC<{ data: any }> = ({ data }) => {
   const incoming = data.incomingFields || [];
   const outgoing = data.outgoingFields || [];
   const activeAttribute = data.activeAttribute as ActiveAttribute | null;
@@ -236,7 +236,7 @@ const ManagedResourceNode: React.FC<{ data: any }> = ({ data }) => {
 };
 
 // Custom Node for XRD Composite Status Output
-const CompositeOutputNode: React.FC<{ data: any }> = ({ data }) => {
+export const CompositeOutputNode: React.FC<{ data: any }> = ({ data }) => {
   const fields = data.fields || [];
   const activeAttribute = data.activeAttribute as ActiveAttribute | null;
   const highlightedFields = data.highlightedFields as Set<string> | undefined;
